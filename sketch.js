@@ -11,7 +11,7 @@
 // after computing the new slider configuration, we can iterate over each slider at a time and interpolate to its new value
 // hopefully showing a nonsensical set of transformations that eventually converge to the desired one.
 
-const sliderCount = 8;
+const sliderCount = 6;
 let sliders = [];
 let matrices = [];
 matricesTensors = []; // tf.Tensor2D versions of matrices
@@ -24,27 +24,31 @@ const ROWS = 3;
 const COLS = 3;
 let lastLoss = 0;
 let lastPred = [];
-let TRAINING = true;
+let training = false;
+
+function mousePressed() {
+  sliders.forEach(slider => slider.handleMousePressed());
+}
+
+function mouseDragged() {
+  sliders.forEach(slider => slider.handleMouseDragged());
+}
+
+function mouseReleased() {
+  sliders.forEach(slider => slider.handleMouseReleased());
+}
 
 async function setup() {
   createCanvas(1400, 700);
-  
+
   for (let i = 0; i < sliderCount; i++) {
     //random 
     v = random(-1.0, 1.0);
-    sliders[i] = createSlider(-1.0, 1.0, 0, 0);
-    sliders[i].position(10, 10 + i * 30); // x, y on the page
-    sliders[i].style('width', '200px');   // optional styling
-    sliders[i].input(() => {
-      TRAINING = false; // stop training when user adjusts sliders
-    });
+    
+    sliders[i] = new FancySlider(150, 30 + i * 30, 200, i % 2 == 0 ? 0 : PI);
     // contune training when user releases slider
-    sliders[i].mouseReleased(() => {
-      TRAINING = true;
-      regressor.setRestingOutputFromSliders(sliders.map(s => s.value()));
-    });
 
-    matrices[i] = createRandomMatrix();
+      matrices[i] = createRandomMatrix();
     matricesTensors[i] = mathMatrixToTFMatrix(matrices[i]); // tf.Tensor2D
   
   }
@@ -93,7 +97,7 @@ function getNormalMatrix()
   const angle = 1.0 * Math.PI; // rotation angle in radians
   const sx = 1.0;
   const sy = 1.0;
-  const tx = 1.0 * 200; // translate x
+  const tx = 1.0 * 100; // translate x
   const ty = 1.0 * 100; // translate y
 
   const cosA = Math.cos(angle);
@@ -168,11 +172,26 @@ function createRandomMatrix() {
 
 function updateMatrix() {
   
-  M = math.zeros(3,3);
+  M = math.identity(3);
   for (let i = 0; i < matrices.length; i++)
   {
-    M = math.add(M, math.multiply(matrices[i], sliders[i].value()));
-    print (matrixToString(math.multiply(matrices[i], sliders[i].value())));
+
+    var v = sliders[i].value();
+    var newMatrix;
+    if( i == 0 )
+      newMatrix = getTransformMatrix(0, 1+v, 1+v, 0, 0);
+      else if( i == 1 )
+    newMatrix = getTransformMatrix(v*math.PI, 1, 1, 0, 0);
+  else if( i == 2 )
+    newMatrix = getTransformMatrix(0, 1, 1, 0, v);
+    if( i == 3 )
+      newMatrix = getTransformMatrix(0, 1, 1, 0, v);
+    else if( i == 4 )
+      newMatrix = getTransformMatrix(v*math.PI, 1, 1, 0, 0);
+    else if( i == 5 )
+      newMatrix = getTransformMatrix(0, 1+v, 1+v, 0, 0);
+
+    M = math.multiply(newMatrix, M);
   }
 }
 
@@ -244,8 +263,7 @@ function draw()
   background(220);
 
 
-
-  if (TRAINING)
+  if (training)
   {
     inputMatrix = getTransformMatrix(random(-Math.PI, Math.PI), random(-2, 2), random(-2, 2), 0, 0);
     inputMatrix = getTransformMatrix(0, 1.1, 1.1, 0, 0);
@@ -261,7 +279,7 @@ function draw()
   hh = height / 2;
 
   M.set([0,2], (M.get([0,2]) * hw));
-  M.set([1,2], (M.get([1,2]) * hh));
+  M.set([1,2], (M.get([1,2]) * hw));
 
   // M = lerpMatrix(M, getNormalMatrix(), sliders[4].value());
 
@@ -289,6 +307,11 @@ function draw()
 
   h += 80;
   text("Training loss: " + nf(trainingLoss, 1, 4), 10, h);
+
+  
+
+  sliders.forEach(slider => slider.draw());
+
 }
 
 function trainingStep(inputMatrix) // sample input matrix
