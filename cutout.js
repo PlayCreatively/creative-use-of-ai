@@ -58,14 +58,7 @@ class Cutout {
     // Apply scale factor if needed (assuming it scales the image size)
     scale(this.scaleFactor);
 
-    // Set color based on closeness
-    if (isClose) {
-      // Green with some transparency
-      tint(0, 255, 0, 200);
-    } else {
-      // Gray with some transparency
-      tint(100, 200);
-    }
+    tint(0);
 
     // Draw the image centered
     image(this.img, -this.img.width / 2, -this.img.height / 2);
@@ -79,7 +72,7 @@ class Cutout {
   else 
     noTint();
 
-  this.drawAt(inputMatrix);
+  	this.drawAt(inputMatrix);
 
     return isClose;
   }
@@ -98,6 +91,11 @@ class Cutout {
     image(this.img, -this.img.width / 2, -this.img.height / 2);
     
     pop();
+  }
+
+  drawAtTarget()
+  {
+	this.drawAt(this.targetMatrix);
   }
 
   // Helper to check if input matrix is close to target matrix

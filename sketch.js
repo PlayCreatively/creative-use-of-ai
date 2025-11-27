@@ -42,10 +42,15 @@ function mousePressed() {
   sliders.forEach(slider => slider.handleMousePressed());
 
   if (confirmButton.isHovering(mouseX, mouseY)) {
-      currentCutoutIndex++;
-      if (currentCutoutIndex >= library.count()) {
-          currentCutoutIndex = 0; 
-      }
+
+    // Save current matrix as target for current cutout
+    library.get(currentCutoutIndex).targetMatrix = M.clone();
+
+    currentCutoutIndex++;
+    resetSliders();
+    if (currentCutoutIndex >= library.count()) {
+        currentCutoutIndex = 0; 
+    }
   }
 }
 
@@ -55,6 +60,10 @@ function mouseDragged() {
 
 function mouseReleased() {
   sliders.forEach(slider => slider.handleMouseReleased());
+}
+
+function resetSliders() {
+  sliders.forEach(slider => slider.value(random(-1.0, 1.0)));
 }
 
 async function setup() {
@@ -72,7 +81,7 @@ async function setup() {
   
   }
 
-  img = loadImage('sprite.jpg');
+  resetSliders();
   
   noStroke();
   
@@ -292,17 +301,19 @@ function draw()
 
   updateMatrix();
 
-  // M = getNormalMatrix();
-
   hw = width / 2;
   hh = height / 2;
 
   M.set([0,2], (M.get([0,2]) * hw + hw));
   M.set([1,2], (M.get([1,2]) * hh + hh));
 
-  // M = lerpMatrix(M, getNormalMatrix(), sliders[4].value());
+  for(let i = 0; i < currentCutoutIndex; i++)
+  {
+    let cutout = library.get(i);
+    if (cutout)
+      cutout.drawAtTarget();
 
-
+  }
 
   let cutout = library.get(currentCutoutIndex);
   if (cutout) {

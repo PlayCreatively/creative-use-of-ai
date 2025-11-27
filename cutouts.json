@@ -22,7 +22,7 @@
 	},
 	{
 		"imageName": "sprite.jpg",
-		"scale": 0.5,
+		"scale": 0.2,
 		"targetMatrix": [
 			[
 				0.5,
