@@ -5,32 +5,37 @@ class FancySlider {
     this.length = length;
     this.thickness = 6;
 
-    this.angle = angle;            // 0 or HALF_PI
-    this.v = 0.0;          // -1..1
-    this.enabled = true;       // now visual only, does NOT lock the slider
+    this.angle = angle;       
+    this.v = 0.0;             // -1..1
+    this.enabled = true;      
 
     this.hover = false;
+    
+    // Interaction flags
     this.draggingThumb = false;
     this.draggingMove = false;
+    this.draggingRotate = false; // New flag for rotation
+    
+    // Offsets to keep interaction smooth
     this.dragOffsetX = 0;
     this.dragOffsetY = 0;
+    this.dragAngleOffset = 0;    // New offset to prevent snapping
 
     this.gizmoSize = 18;
-    this.gizmoMargin = 32;     // increased margin
+    this.gizmoMargin = 32;    
   }
 
   value(newValue) {
-	if (newValue === undefined) {
+    if (newValue === undefined) {
+      return this.v;
+    }
+    this.v = constrain(newValue, -1, 1);
     return this.v;
   }
-  this.v = constrain(newValue, -1, 1); // optional: clamp
-  return this.v;
-}
 
   // --- coordinate helpers (local slider space vs screen) ---
 
   screenFromLocal(px, py) {
-    // rotate (px, py) around (this.x, this.y) by this.angle
     let c = cos(this.angle);
     let s = sin(this.angle);
     let sx = this.x + px * c - py * s;
@@ -39,7 +44,6 @@ class FancySlider {
   }
 
   localFromScreen(mx, my) {
-    // inverse rotation: screen -> slider local
     let dx = mx - this.x;
     let dy = my - this.y;
     let c = cos(this.angle);
@@ -53,16 +57,13 @@ class FancySlider {
 
   isMouseOverTrack() {
     let p = this.localFromScreen(mouseX, mouseY);
-    // Treat slider as a thin rectangle along x-axis
     return p.x >= -this.length / 2 &&
            p.x <=  this.length / 2 &&
-           abs(p.y) <= 10;
+           (!this.enabled ? (p.y > 0 && p.y <= this.length) : abs(p.y) <= 10);
   }
 
   gizmoRect(index) {
     // index: 0 = rotate, 1 = toggle, 2 = move
-    // Place gizmos in *local* space next to the +X end of the slider,
-    // then rotate into screen space.
     let lx = this.length / 2 + this.gizmoMargin;
     let ly = (index - 1) * (this.gizmoSize + 4);
     let center = this.screenFromLocal(lx, ly);
@@ -104,28 +105,37 @@ class FancySlider {
 
     if (!this.hover) return;
 
-    // Gizmos take priority
+    // 1. ROTATE GIZMO
     if (this.isMouseOverGizmo(0)) {
-      // rotate
-      this.angle = (this.angle + HALF_PI) % TWO_PI;
+      this.draggingRotate = true;
+      
+      // Calculate the angle from the center of the slider to the mouse
+      let dx = mouseX - this.x;
+      let dy = mouseY - this.y;
+      let mouseAngle = atan2(dy, dx);
+      
+      // Store the difference. 
+      // This ensures that if you grab the handle slightly off-center, 
+      // the slider doesn't "snap" to align perfectly with the mouse immediately.
+      this.dragAngleOffset = this.angle - mouseAngle;
       return;
     }
 
+    // 2. TOGGLE GIZMO
     if (this.isMouseOverGizmo(1)) {
-      // toggle (visual state only now)
       this.enabled = !this.enabled;
       return;
     }
 
+    // 3. MOVE GIZMO
     if (this.isMouseOverGizmo(2)) {
-      // move whole slider
       this.draggingMove = true;
       this.dragOffsetX = mouseX - this.x;
       this.dragOffsetY = mouseY - this.y;
       return;
     }
 
-    // Drag thumb — no longer blocked by enabled/disabled
+    // 4. TRACK DRAG
     if (this.isMouseOverTrack()) {
       this.draggingThumb = true;
       this.updateValueFromMouse();
@@ -135,6 +145,16 @@ class FancySlider {
   handleMouseDragged() {
     if (this.draggingThumb) {
       this.updateValueFromMouse();
+      
+    } else if (this.draggingRotate) {
+      // Calculate new mouse angle relative to slider center
+      let dx = mouseX - this.x;
+      let dy = mouseY - this.y;
+      let mouseAngle = atan2(dy, dx);
+      
+      // Apply angle with the initial offset preserved
+      this.angle = mouseAngle + this.dragAngleOffset;
+      
     } else if (this.draggingMove) {
       this.x = mouseX - this.dragOffsetX;
       this.y = mouseY - this.dragOffsetY;
@@ -144,6 +164,7 @@ class FancySlider {
   handleMouseReleased() {
     this.draggingThumb = false;
     this.draggingMove = false;
+    this.draggingRotate = false;
   }
 
   // --- drawing ---
@@ -153,16 +174,20 @@ class FancySlider {
     translate(this.x, this.y);
     rotate(this.angle);
 
+    if (!this.enabled) {
+      rectMode(CENTER);
+      fill(180, 100);
+      noStroke();
+      rect(0, this.length / 2, this.length, this.length, 4);
+    }
+
     // track
     strokeWeight(this.thickness);
-    // still dim track when "disabled", but purely cosmetic now
     stroke(this.enabled ? 220 : 120);
     line(-this.length / 2, 0, this.length / 2, 0);
 
-    // thumb position in local coords
-    let tx = map(this.v, -1, 1, -this.length / 2, this.length / 2);
-
     // thumb
+    let tx = map(this.v, -1, 1, -this.length / 2, this.length / 2);
     rectMode(CENTER);
     stroke(0, 80);
     strokeWeight(1);
@@ -174,13 +199,13 @@ class FancySlider {
   }
 
   drawGizmos() {
-    if (!this.hover) return;
+    if (!this.hover && !this.draggingRotate && !this.draggingMove) return;
 
     textAlign(CENTER, CENTER);
     textSize(10);
 
-    // Rotate gizmo
-    this.drawGizmo(0, "⤾");
+    // Rotate gizmo (changed icon to circle arrow to indicate free rotation)
+    this.drawGizmo(0, "↻"); 
 
     // Toggle gizmo
     this.drawGizmo(1, this.enabled ? "●" : "○");
@@ -192,10 +217,14 @@ class FancySlider {
   drawGizmo(index, label) {
     let r = this.gizmoRect(index);
     let hovered = this.isMouseOverGizmo(index);
+    
+    // Visual feedback if we are currently dragging this specific operation
+    let active = (index === 0 && this.draggingRotate) || 
+                 (index === 2 && this.draggingMove);
 
     stroke(200);
     strokeWeight(1);
-    fill(hovered ? 255 : 230, hovered ? 255 : 220);
+    fill(hovered || active ? 255 : 230, hovered || active ? 255 : 220);
     rect(r.x, r.y, r.w, r.h, 4);
 
     noStroke();
@@ -205,7 +234,6 @@ class FancySlider {
 
   draw() {
     this.updateHover();
-
     this.drawTrackAndThumb();
     this.drawGizmos();
   }

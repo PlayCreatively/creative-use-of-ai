@@ -19,6 +19,9 @@ matricesTensors = []; // tf.Tensor2D versions of matrices
 let img;
 let M; // our 3x3 matrix
 
+const width = 1400;
+const height = 700;
+
 let regressor;
 const ROWS = 3;
 const COLS = 3;
@@ -39,7 +42,7 @@ function mouseReleased() {
 }
 
 async function setup() {
-  createCanvas(1400, 700);
+  createCanvas(width, height);
 
   for (let i = 0; i < sliderCount; i++) {
     //random 
@@ -260,7 +263,7 @@ function lerpMatrix(M1, M2, t)
 let trainingLoss;
 function draw() 
 {
-  background(220);
+  background(120);
 
 
   if (training)
@@ -278,8 +281,8 @@ function draw()
   hw = width / 2;
   hh = height / 2;
 
-  M.set([0,2], (M.get([0,2]) * hw));
-  M.set([1,2], (M.get([1,2]) * hw));
+  M.set([0,2], (M.get([0,2]) * hw + hw));
+  M.set([1,2], (M.get([1,2]) * hw + hh));
 
   // M = lerpMatrix(M, getNormalMatrix(), sliders[4].value());
 
@@ -296,9 +299,7 @@ function draw()
 
   applyMatrixM(M);
 
-  
-  // Draw the image in "local" coordinates (0,0)
-  image(img, 0, 0);
+  image(img, -img.width/2, -img.height/2);
   pop();  
 
   let h = 30 * (sliderCount + 1);
