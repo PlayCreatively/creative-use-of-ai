@@ -29,8 +29,24 @@ let lastLoss = 0;
 let lastPred = [];
 let training = false;
 
+
+let currentCutoutIndex = 0;
+let library;
+let confirmButton = new SimpleButton();
+
+function preload() {
+  library = new CutoutLibrary("cutouts.json", {width: width, height: height});
+}
+
 function mousePressed() {
   sliders.forEach(slider => slider.handleMousePressed());
+
+  if (confirmButton.isHovering(mouseX, mouseY)) {
+      currentCutoutIndex++;
+      if (currentCutoutIndex >= library.count()) {
+          currentCutoutIndex = 0; 
+      }
+  }
 }
 
 function mouseDragged() {
@@ -282,25 +298,26 @@ function draw()
   hh = height / 2;
 
   M.set([0,2], (M.get([0,2]) * hw + hw));
-  M.set([1,2], (M.get([1,2]) * hw + hh));
+  M.set([1,2], (M.get([1,2]) * hh + hh));
 
   // M = lerpMatrix(M, getNormalMatrix(), sliders[4].value());
 
 
 
-  // Extract the 2D affine part for p5's applyMatrix(a, b, c, d, e, f)
-
-
-  push();
-  // p5 uses:
-  // x' = a*x + c*y + e
-  // y' = b*x + d*y + f
-
-
-  applyMatrixM(M);
-
-  image(img, -img.width/2, -img.height/2);
-  pop();  
+  let cutout = library.get(currentCutoutIndex);
+  if (cutout) {
+    // Draw the target silhouette and check against current matrix M
+    let success = cutout.drawTarget(M);
+    
+    // Calculate button position
+    const s = cutout.scaleFactor;
+    const localX = (cutout.img.width / 2) * s * 0.75;
+    const localY = (cutout.img.height / 2) * s * 0.75;
+    const pos = transformPoint(M, localX, localY);
+    // Draw confirm button
+    if(success)
+      confirmButton.draw("Confirm", pos.x, pos.y, 100, 40);
+  }
 
   let h = 30 * (sliderCount + 1);
 
