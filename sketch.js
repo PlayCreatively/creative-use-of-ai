@@ -76,7 +76,7 @@ async function setup() {
     sliders[i] = new FancySlider(150, 30 + i * 30, 200, i % 2 == 0 ? 0 : PI);
     // contune training when user releases slider
 
-      matrices[i] = createRandomMatrix();
+    matrices[i] = createRandomMatrix();
     matricesTensors[i] = mathMatrixToTFMatrix(matrices[i]); // tf.Tensor2D
   
   }
@@ -149,6 +149,30 @@ function getNormalMatrix()
   ]);
 }
 
+function halfAngle1(angle)
+{
+  const cosA = Math.cos(angle);
+  const sinA = Math.sin(angle);
+
+  return math.matrix([
+    [cosA, sinA, 0],
+    [-0, 0, 0],
+    [0, 0, 1]
+  ]);
+}
+
+function halfAngle2(angle)
+{
+  const cosA = Math.cos(angle);
+  const sinA = Math.sin(angle);
+
+  return math.matrix([
+    [0, 0, 0],
+    [-sinA, cosA, 0],
+    [0, 0, 1]
+  ]);
+}
+
 function getTransformMatrix(angle, sx, sy, tx, ty)
 {
   
@@ -201,26 +225,27 @@ function createRandomMatrix() {
 function updateMatrix() {
   
   M = math.identity(3);
-  for (let i = 0; i < matrices.length; i++)
+  for (let i = 0; i < 4; i++)
   {
 
     var v = sliders[i].value();
     var newMatrix;
     if( i == 0 )
       newMatrix = getTransformMatrix(0, 1+v, 1+v, 0, 0);
-      else if( i == 1 )
-    newMatrix = getTransformMatrix(v*math.PI, 1, 1, 0, 0);
-  else if( i == 2 )
-    newMatrix = getTransformMatrix(0, 1, 1, 0, v);
-    if( i == 3 )
+    if( i == 1 )
       newMatrix = getTransformMatrix(0, 1, 1, 0, v);
-    else if( i == 4 )
+    else if( i == 2 )
       newMatrix = getTransformMatrix(v*math.PI, 1, 1, 0, 0);
-    else if( i == 5 )
+    else if( i == 3 )
       newMatrix = getTransformMatrix(0, 1+v, 1+v, 0, 0);
 
     M = math.multiply(newMatrix, M);
   }
+
+  var v = sliders[4].value();
+  M = math.add(M, halfAngle1(v*math.PI));
+  v = sliders[5].value();
+  M = math.add(M, halfAngle2(v*math.PI));
 }
 
 // sliderTensor: tf.Tensor of shape [1, N] or [N]
@@ -332,7 +357,7 @@ function draw()
 
   let h = 30 * (sliderCount + 1);
 
-  text("Current Transformation Matrix:\n" + matrixToString(M), 10, h);
+  text("Current Transformation Matrix:\n" + matrixToString(M), 50, h);
 
   h += 80;
   text("Training loss: " + nf(trainingLoss, 1, 4), 10, h);
