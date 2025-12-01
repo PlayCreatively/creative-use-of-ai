@@ -14,12 +14,12 @@ class FancySlider {
     // Interaction flags
     this.draggingThumb = false;
     this.draggingMove = false;
-    this.draggingRotate = false; // New flag for rotation
+    this.draggingRotate = false;
     
     // Offsets to keep interaction smooth
     this.dragOffsetX = 0;
     this.dragOffsetY = 0;
-    this.dragAngleOffset = 0;    // New offset to prevent snapping
+    this.dragAngleOffset = 0;    // offset to prevent snapping
 
     this.gizmoSize = 18;
     this.gizmoMargin = 32;    
@@ -201,6 +201,8 @@ class FancySlider {
   drawGizmos() {
     if (!this.hover && !this.draggingRotate && !this.draggingMove) return;
 
+    push();
+
     textAlign(CENTER, CENTER);
     textSize(10);
 
@@ -212,6 +214,8 @@ class FancySlider {
 
     // Move gizmo
     this.drawGizmo(2, "✥");
+
+    pop();
   }
 
   drawGizmo(index, label) {

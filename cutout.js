@@ -67,11 +67,6 @@ class Cutout {
 
   // draw actual image //
 
-  if (!isClose) 
-    tint(225); 
-  else 
-    noTint();
-
   	this.drawAt(inputMatrix);
 
     return isClose;
@@ -91,6 +86,7 @@ class Cutout {
     image(this.img, -this.img.width / 2, -this.img.height / 2);
     
     pop();
+
   }
 
   drawAtTarget()
@@ -105,17 +101,17 @@ class Cutout {
     // Calculate element-wise difference
     let diff = math.subtract(this.targetMatrix, inputMatrix);
     
-    // Calculate sum of absolute differences
-    let sum = 0;
-    diff.forEach(function (value) {
-      sum += Math.abs(value);
-    });
-
     // Threshold for "close enough"
     // Adjust this value based on sensitivity requirements
-    const threshold = 50.0; 
+    const threshold = 2.0; 
     
-    return sum < threshold;
+    let closeEnough = true;
+    diff.forEach(function (value) {
+      closeEnough &= threshold > Math.abs(value);
+    });
+
+    
+    return closeEnough;
   }
 
   // Helper to apply a math.js matrix to p5 context
