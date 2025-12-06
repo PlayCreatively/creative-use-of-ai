@@ -1,3 +1,7 @@
+const MOVE_GIZMO = 2;
+const TOGGLE_GIZMO = 1;
+const ROTATE_GIZMO = 0;
+
 class FancySlider {
   constructor(x, y, length, angle = 0) {
     this.x = x;
@@ -207,13 +211,13 @@ class FancySlider {
     textSize(10);
 
     // Rotate gizmo (changed icon to circle arrow to indicate free rotation)
-    this.drawGizmo(0, "↻"); 
+    this.drawGizmo(ROTATE_GIZMO, "↻"); 
+    
+    // Move gizmo
+    this.drawGizmo(MOVE_GIZMO, "✥");
 
     // Toggle gizmo
-    this.drawGizmo(1, this.enabled ? "●" : "○");
-
-    // Move gizmo
-    this.drawGizmo(2, "✥");
+    this.drawGizmo(TOGGLE_GIZMO, this.enabled ? "●" : "○");
 
     pop();
   }
@@ -223,8 +227,8 @@ class FancySlider {
     let hovered = this.isMouseOverGizmo(index);
     
     // Visual feedback if we are currently dragging this specific operation
-    let active = (index === 0 && this.draggingRotate) || 
-                 (index === 2 && this.draggingMove);
+    let active = (index === ROTATE_GIZMO && this.draggingRotate) || 
+                 (index === MOVE_GIZMO && this.draggingMove);
 
     stroke(200);
     strokeWeight(1);

@@ -1,38 +1,38 @@
 [
 	{
-		"imageName": "sprite.jpg",
+		"imageName": "sprite.png",
 		"scale": 0.2,
 		"targetMatrix": [
 			[
-				2,
+				1,
 				0,
-				50
+				-0.025
 			],
 			[
 				0,
-				2,
-				50
+				1,
+				-0.025
 			],
 			[
 				0,
 				0,
-				2
+				1
 			]
 		]
 	},
 	{
-		"imageName": "sprite.jpg",
+		"imageName": "sprite.png",
 		"scale": 0.2,
 		"targetMatrix": [
 			[
 				0.5,
 				-0.866,
-				300
+				0.25
 			],
 			[
 				0.866,
 				0.5,
-				300
+				0.25
 			],
 			[
 				0,

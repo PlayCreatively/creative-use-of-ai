@@ -13,9 +13,6 @@
 
 const sliderCount = 6;
 let sliders = [];
-let matrices = [];
-matricesTensors = []; // tf.Tensor2D versions of matrices
-
 let img;
 let M; // our 3x3 matrix
 
@@ -27,7 +24,7 @@ const ROWS = 3;
 const COLS = 3;
 let lastLoss = 0;
 let lastPred = [];
-let training = false;
+let training = true;
 
 
 let currentCutoutIndex = 0;
@@ -75,10 +72,6 @@ async function setup() {
     
     sliders[i] = new FancySlider(150, 30 + i * 30, 200, i % 2 == 0 ? 0 : PI);
     // contune training when user releases slider
-
-    matrices[i] = createRandomMatrix();
-    matricesTensors[i] = mathMatrixToTFMatrix(matrices[i]); // tf.Tensor2D
-  
   }
 
   resetSliders();
@@ -93,221 +86,38 @@ async function setup() {
     inCols: COLS,
     outputSize: sliderCount,
     hiddenUnits: 9,
-    learningRate: 0.005,
+    learningRate: 0.05,
     lossFn: (yPred, context) => {   
-      let m = matrixFromSlidersTF(yPred, matricesTensors); // tf.Tensor2D [3,3]
+      // Map 0..1 output to -1..1 range to match sliders
+      const mappedPred = yPred.mul(2).sub(1);
+
+      // Use the unified TF function
+      let m = calculateModelMatrixTF(mappedPred); 
       const target = mathMatrixToTFMatrix(context.inputMatrix);
-      const diff = m.sub(target);     // tf.sub
-      const absDiff = diff.abs();     // elementwise abs
-      const loss = absDiff.sum();     // scalar
+      const loss = m.sub(target).abs().sum();
       return loss; 
     }
   });
 
 }
 
-function mathMatrixToTFMatrix(M)
-{
-  const [rows, cols] = M.size();
-  const values = [];
-  for (let r = 0; r < rows; r++)
-    for (let c = 0; c < cols; c++)
-      values.push(M.get([r,c]));
-
-  return tf.tensor2d(values, [rows, cols]);
-}
-
-function getNormalMatrix()
-{
-  
-  // ----- build an affine transform matrix -----
-  // We'll: scale, rotate, then translate.
-  const angle = 1.0 * Math.PI; // rotation angle in radians
-  const sx = 1.0;
-  const sy = 1.0;
-  const tx = 1.0 * 100; // translate x
-  const ty = 1.0 * 100; // translate y
-
-  const cosA = Math.cos(angle);
-  const sinA = Math.sin(angle);
-
-  // Standard 2D affine form:
-  // [ a c e ]
-  // [ b d f ]
-  // [ 0 0 1 ]
-  const a =  cosA * sx;
-  const b =  sinA * sx;
-  const c = -sinA * sy;
-  const d =  cosA * sy;
-  const e = tx;
-  const f = ty;
-
-  return math.matrix([
-    [a, c, e],
-    [b, d, f],
-    [0, 0, 1]
-  ]);
-}
-
-function halfAngle1(angle)
-{
-  const cosA = Math.cos(angle);
-  const sinA = Math.sin(angle);
-
-  return math.matrix([
-    [cosA, sinA, 0],
-    [-0, 0, 0],
-    [0, 0, 1]
-  ]);
-}
-
-function halfAngle2(angle)
-{
-  const cosA = Math.cos(angle);
-  const sinA = Math.sin(angle);
-
-  return math.matrix([
-    [0, 0, 0],
-    [-sinA, cosA, 0],
-    [0, 0, 1]
-  ]);
-}
-
-function getTransformMatrix(angle, sx, sy, tx, ty)
-{
-  
-  // ----- build an affine transform matrix -----
-  // We'll: scale, rotate, then translate.
-
-  const cosA = Math.cos(angle);
-  const sinA = Math.sin(angle);
-
-  // Standard 2D affine form:
-  // [ a c e ]
-  // [ b d f ]
-  // [ 0 0 1 ]
-  const a =  cosA * sx;
-  const b =  sinA * sx;
-  const c = -sinA * sy;
-  const d =  cosA * sy;
-  const e = tx;
-  const f = ty;
-
-  return math.matrix([
-    [a, c, e],
-    [b, d, f],
-    [0, 0, 1]
-  ]);
-}
-
-function createRandomMatrix() {
-  const min = 0.5;
-  const max = 1.0;
-
-  let bitflag = Math.floor(random(0, 63));
-
-  // alert(bitflag);
-
-  let randM = math.zeros(3,3);
-
-  for (let i = 0; i < 6; i++)
-    if ((bitflag & (1 << i)) == 0)
-    {
-      let randVal = random(min, max) * (random() < 0.5 ? -1 : 1);
-      randM.set([Math.floor(i / 3), i % 3], randVal);
-    }
-
-  // alert(matrixToString(randM));
-
-  return randM;
-}
-
 function updateMatrix() {
   
-  M = math.identity(3);
-  for (let i = 0; i < 4; i++)
-  {
+  // 1. Calculate matrix using the unified TF logic
+  // tf.tidy automatically cleans up the tensors created inside
+  const mFlat = tf.tidy(() => {
+      const vals = sliders.map(s => s.value());
+      const sliderTensor = tf.tensor2d([vals]); // Shape [1, 6]
+      const mTensor = calculateModelMatrixTF(sliderTensor);
+      return mTensor.dataSync(); // Download to CPU array
+  });
 
-    var v = sliders[i].value();
-    var newMatrix;
-    if( i == 0 )
-      newMatrix = getTransformMatrix(0, 1+v, 1+v, 0, 0);
-    if( i == 1 )
-      newMatrix = getTransformMatrix(0, 1, 1, 0, v);
-    else if( i == 2 )
-      newMatrix = getTransformMatrix(v*math.PI, 1, 1, 0, 0);
-    else if( i == 3 )
-      newMatrix = getTransformMatrix(0, 1+v, 1+v, 0, 0);
-
-    M = math.multiply(newMatrix, M);
-  }
-
-  var v = sliders[4].value();
-  M = math.add(M, halfAngle1(v*math.PI));
-  v = sliders[5].value();
-  M = math.add(M, halfAngle2(v*math.PI));
-}
-
-// sliderTensor: tf.Tensor of shape [1, N] or [N]
-// matrices: JS array of length N, each element is a 3x3 JS array
-function matrixFromSlidersTF(slidersTensor, matricesTensors) {
-  const numSliders = matricesTensors.length;
-
-  // Ensure shape [numSliders]
-  const sliders = slidersTensor.reshape([numSliders]); // [N]
-
-  // Start from 3x3 zeros tensor
-  let M = tf.zeros([3, 3]);
-
-  for (let i = 0; i < numSliders; i++) {
-    // scalar weight for this matrix
-    const w = sliders.slice([i], [1]).reshape([]); // scalar
-    const r = w.sub(0.5).mul(2.0); // remap 0..1 to -1..1 using tensor ops
-    const mat = matricesTensors[i];  // tf.Tensor2D [3,3]
-    // weighted submatrix
-    const subMatrix = mat.mul(r);                  // [3,3]
-
-    // accumulate
-    M = M.add(subMatrix);                          // [3,3]
-  }
-
-  return M; // tf.Tensor2D [3,3]
-}
-
-function matrixToString(M) {
-  let result = "";
-  for (let r = 0; r < 3; r++) 
-  {
-    let rowStr = "";
-    for (let c = 0; c < 3; c++) 
-      rowStr += M.get([r, c]).toFixed(2) + "\t";
-
-    result += rowStr + "\n";
-  }
-  return result;
-}
-
-function applyMatrixM(M)
-{
-  const a = M.get([0, 0]);
-  const c = M.get([0, 1]);
-  const e = M.get([0, 2]);
-  const b = M.get([1, 0]);
-  const d = M.get([1, 1]);
-  const f = M.get([1, 2]);
-
-  applyMatrix(a, b, c, d, e, f);
-}
-
-function lerpMatrix(M1, M2, t)
-{
-  let result = math.zeros(3,3);
-  for (let i = 0; i < 3; i++) {
-    for (let j = 0; j < 3; j++) {
-      result.set([i,j], M1.get([i,j]) + (M2.get([i,j]) - M1.get([i,j])) * t);
-    }
-  }
-  return result;
+  // 2. Reconstruct math.js matrix for drawing
+  M = math.matrix([
+    [mFlat[0], mFlat[1], mFlat[2]],
+    [mFlat[3], mFlat[4], mFlat[5]],
+    [mFlat[6], mFlat[7], mFlat[8]]
+  ]);
 }
 
 let trainingLoss;
@@ -318,30 +128,27 @@ function draw()
 
   if (training)
   {
-    inputMatrix = getTransformMatrix(random(-Math.PI, Math.PI), random(-2, 2), random(-2, 2), 0, 0);
-    inputMatrix = getTransformMatrix(0, 1.1, 1.1, 0, 0);
+    let cutout = library.get(currentCutoutIndex);
         
-    trainingLoss = trainingStep(inputMatrix);
+    trainingLoss = trainingStep(cutout.targetMatrix);
   }
 
   updateMatrix();
-
-  hw = width / 2;
-  hh = height / 2;
-
-  M.set([0,2], (M.get([0,2]) * hw + hw));
-  M.set([1,2], (M.get([1,2]) * hh + hh));
 
   for(let i = 0; i < currentCutoutIndex; i++)
   {
     let cutout = library.get(i);
     if (cutout)
       cutout.drawAtTarget();
-
   }
 
   let cutout = library.get(currentCutoutIndex);
+  
+  let h = 30 * (sliderCount + 1);
+
+  text("Current Transformation Matrix:\n" + matrixToString(M), 50, h);
   if (cutout) {
+    
     // Draw the target silhouette and check against current matrix M
     let success = cutout.drawTarget(M);
     
@@ -349,15 +156,22 @@ function draw()
     const s = cutout.scaleFactor;
     const localX = (cutout.img.width / 2) * s * 0.75;
     const localY = (cutout.img.height / 2) * s * 0.75;
-    const pos = transformPoint(M, localX, localY);
+
+    let MClone = math.clone(M);
+
+    const canvasSize = {width: width, height: height};
+    const cw = canvasSize.width / 2;
+    const ch = canvasSize.height / 2;
+
+    // center in canvas and scale position matrix to canvas coords
+    MClone.set([0,2], (MClone.get([0,2]) * cw + cw));
+    MClone.set([1,2], (MClone.get([1,2]) * ch + ch));
+
+    const pos = transformPoint(MClone, localX, localY);
     // Draw confirm button
     if(success)
       confirmButton.draw("Confirm", pos.x, pos.y, 100, 40);
   }
-
-  let h = 30 * (sliderCount + 1);
-
-  text("Current Transformation Matrix:\n" + matrixToString(M), 50, h);
 
   h += 80;
   text("Training loss: " + nf(trainingLoss, 1, 4), 10, h);
@@ -370,8 +184,13 @@ function draw()
 
 function trainingStep(inputMatrix) // sample input matrix
 {
+  if (!regressor) return 0;
+
   // Train one step with this matrix
   lastLoss = regressor.trainStep(inputMatrix);
+
+  
+  text("Target Matrix:\n" + matrixToString(inputMatrix), 500, 50);
 
   // Get prediction for visualization
   lastPred = regressor.predict(inputMatrix);
@@ -382,35 +201,74 @@ function trainingStep(inputMatrix) // sample input matrix
   return lastLoss;
 }
 
-// Simple helpers for the sketch
-function randomMatrix(rows, cols) {
-  const m = [];
-  for (let r = 0; r < rows; r++) {
-    const row = [];
-    for (let c = 0; c < cols; c++) {
-      row.push(random()); // p5 random 0..1
+function calculateModelMatrixTF(sliderValues) {
+  return tf.tidy(() => {
+    // Ensure input is 2D: [batchSize, 6]
+    let vals = sliderValues;
+    if (sliderValues.rank === 1) {
+      vals = sliderValues.expandDims(0);
     }
-    m.push(row);
-  }
-  return m;
-}
+    
+    const batchSize = vals.shape[0];
+    const zeros = tf.zeros([batchSize, 1]);
+    const ones = tf.ones([batchSize, 1]);
 
-function matrixMean(mat) {
-  let sum = 0;
-  let count = 0;
-  for (let r = 0; r < mat.length; r++) {
-    for (let c = 0; c < mat[r].length; c++) {
-      sum += mat[r][c];
-      count++;
-    }
-  }
-  return sum / count;
-}
+    // Split sliders into individual columns [batch, 1]
+    const [s0, s1, s2, s3, s4, s5] = tf.split(vals, 6, 1);
 
-function matrixAbsSum(mat) {
-  let sum = 0;
-  for (let r = 0; r < mat.length; r++)
-    for (let c = 0; c < mat[r].length; c++)
-      sum += Math.abs(mat[r][c]);
-  return sum;
+    // Helper: Build 3x3 matrix from components
+    // [ sx*cos -sy*sin tx ]
+    // [ sx*sin  sy*cos ty ]
+    // [ 0       0      1  ]
+    const makeMat = (angle, sx, sy, tx, ty) => {
+       const c = tf.cos(angle);
+       const s = tf.sin(angle);
+       
+       // Stack all 9 elements at once, then reshape
+       return tf.stack([
+         c.mul(sx), s.mul(sy).neg(), tx,
+         s.mul(sx), c.mul(sy),       ty,
+         zeros,     zeros,           ones
+       ], 1).reshape([batchSize, 3, 3]);
+    };
+
+    // --- 1. Scale (1+v, 1+v) ---
+    let M = makeMat(zeros, s0.add(1), s0.add(1), zeros, zeros);
+
+    // --- 2. Translate Y (v) ---
+    let M1 = makeMat(zeros, ones, ones, zeros, s1);
+    M = M1.matMul(M);
+
+    // --- 3. Rotate (v*PI) ---
+    let M2 = makeMat(s2.mul(Math.PI), ones, ones, zeros, zeros);
+    M = M2.matMul(M);
+
+    // --- 4. Scale (1+v, 1+v) ---
+    let M3 = makeMat(zeros, s3.add(1), s3.add(1), zeros, zeros);
+    M = M3.matMul(M);
+
+    // --- 5. Special Rotation (HalfAngle1 + HalfAngle2) ---
+    const PI = Math.PI;
+    
+    // HalfAngle1 (s4) -> [cos, sin, 0; 0,0,0; 0,0,1]
+    const a4 = s4.mul(PI);
+    const H1 = tf.stack([
+        tf.cos(a4), tf.sin(a4), zeros,
+        zeros,      zeros,      zeros,
+        zeros,      zeros,      ones
+    ], 1).reshape([batchSize, 3, 3]);
+
+    // HalfAngle2 (s5) -> [0,0,0; -sin, cos, 0; 0,0,0]
+    const a5 = s5.mul(PI);
+    const H2 = tf.stack([
+        zeros,             zeros,      zeros,
+        tf.sin(a5).neg(),  tf.cos(a5), zeros,
+        zeros,             zeros,      zeros
+    ], 1).reshape([batchSize, 3, 3]);
+
+    // Combine and multiply
+    M = M.matMul(H1.add(H2));
+
+    return M;
+  });
 }

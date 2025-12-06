@@ -28,18 +28,15 @@ class CutoutLibrary {
 class Cutout {
   constructor(data, canvasSize) {
     this.imageName = data.imageName;
-    this.scaleFactor = data.scale || 1.0;;
+    this.scaleFactor = data.scale || 1.0;
     
     // Parse the target matrix from the JSON array
     // Assuming data.targetMatrix is a 3x3 array of numbers
     this.targetMatrix = math.matrix(data.targetMatrix);
+    
+    this.cw = canvasSize.width / 2;
+    this.ch = canvasSize.height / 2;
 
-	let hw = canvasSize.width / 2;
-	let hh = canvasSize.height / 2;
-
-	this.targetMatrix.set([0,2], (this.targetMatrix.get([0,2]) + hw));
-	this.targetMatrix.set([1,2], (this.targetMatrix.get([1,2]) + hh));
-	
     // Load the image
     this.img = loadImage(this.imageName);
   }
@@ -50,23 +47,11 @@ class Cutout {
   drawTarget(inputMatrix) {
     let isClose = this.isCloseEnough(inputMatrix);
 
-    push();
-    
-    // Apply the target matrix transformation
-    this.applyMathMatrix(this.targetMatrix);
-    
-    // Apply scale factor if needed (assuming it scales the image size)
-    scale(this.scaleFactor);
-
     tint(0);
+    this.drawAtTarget();
+    tint(255);
 
-    // Draw the image centered
-    image(this.img, -this.img.width / 2, -this.img.height / 2);
-
-    pop();
-
-  // draw actual image //
-
+    // draw actual image //
   	this.drawAt(inputMatrix);
 
     return isClose;
@@ -74,10 +59,17 @@ class Cutout {
 
   // Draws the image using a given position matrix
   drawAt(positionMatrix) {
+
+    let copyMatrix = positionMatrix.clone();
+
     push();
     
+    // center in canvas and scale position matrix to canvas coords
+    copyMatrix.set([0,2], (copyMatrix.get([0,2]) * this.cw + this.cw));
+    copyMatrix.set([1,2], (copyMatrix.get([1,2]) * this.ch + this.ch));
+    
     // Apply the given position matrix
-    this.applyMathMatrix(positionMatrix);
+    this.applyMathMatrix(copyMatrix);
     
     // Apply scale factor
     scale(this.scaleFactor);
@@ -103,15 +95,16 @@ class Cutout {
     
     // Threshold for "close enough"
     // Adjust this value based on sensitivity requirements
-    const threshold = 2.0; 
     
-    let closeEnough = true;
-    diff.forEach(function (value) {
-      closeEnough &= threshold > Math.abs(value);
-    });
+    let diffSum = 0;
 
+    diff.forEach(function (value) {
+      diffSum += Math.abs(value);
+    });
     
-    return closeEnough;
+    const threshold = 1.25; 
+    
+    return diffSum < threshold;
   }
 
   // Helper to apply a math.js matrix to p5 context
