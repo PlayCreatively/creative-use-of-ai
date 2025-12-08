@@ -1,8 +1,5 @@
 // MatrixRegressor
 // Small tf.js model: matrix -> 6 normalized outputs, custom loss, custom training loop.
-//
-// Assumes tf.js is loaded globally before this file.
-// <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
 
 class MatrixRegressor {
   /**

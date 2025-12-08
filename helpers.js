@@ -1,3 +1,4 @@
+const { get } = require("http");
 
 function applyMatrixM(M)
 {
@@ -85,6 +86,34 @@ function getTransformMatrix(angle, sx, sy, tx, ty)
   ]);
 }
 
+function getTranslationMatrix(tx, ty)
+{
+  return math.matrix([
+    [1, 0, tx],
+    [0, 1, ty],
+    [0, 0, 1]
+  ]);
+}
+
+function getScaleMatrix(sx, sy)
+{
+  return math.matrix([
+    [sx, 0,  0],
+    [0,  sy, 0],
+    [0,  0,  1]
+  ]);
+}
+
+function getRotationMatrix(angle)
+{
+  const cosA = Math.cos(angle);
+  const sinA = Math.sin(angle);
+  return math.matrix([
+    [ cosA, -sinA, 0],
+    [ sinA,  cosA, 0],
+    [ 0,     0,    1]
+  ]);
+}
 
 function mathMatrixToTFMatrix(M)
 {
@@ -200,4 +229,8 @@ function matrixFromSliders(sliderValues) {
 
     return M;
   });
+}
+
+function stringContainsAny(mainStr, subStrings) {
+  return subStrings.some(subStr => mainStr.indexOf(subStr) !== -1);
 }

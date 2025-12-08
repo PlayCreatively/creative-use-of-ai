@@ -24,12 +24,14 @@ const ROWS = 3;
 const COLS = 3;
 let lastLoss = 0;
 let lastPred = [];
-let training = true;
+let aiCoroutine = null;
 
+let aiTargetMatrix = math.identity(3);
 
 let currentCutoutIndex = 0;
 let library;
 let confirmButton = new SimpleButton();
+let chatLine;
 
 function preload() {
   library = new CutoutLibrary("cutouts.json", {width: width, height: height});
@@ -37,6 +39,8 @@ function preload() {
 
 function mousePressed() {
   sliders.forEach(slider => slider.handleMousePressed());
+  
+  if (chatLine) chatLine.mousePressed();
 
   if (confirmButton.isHovering(mouseX, mouseY)) {
 
@@ -76,6 +80,9 @@ async function setup() {
 
   resetSliders();
   
+  // Initialize ChatLine at the bottom
+  chatLine = new ChatLine(50, height - 50, 400, 30, handleChatCommand);
+  
   noStroke();
   
   
@@ -99,6 +106,74 @@ async function setup() {
     }
   });
 
+}
+
+
+
+function handleChatCommand(command) {
+
+  command = command.toLowerCase();
+
+  const increase = ["lot", "very", "extremely", "more", "bigger", "further", "much", "far"];
+  const decrease = ["little", "slightly", "less", "smaller", "reduce", "down", "bit"];
+
+  const multiplier = stringContainsAny(command, increase) ? 2 : stringContainsAny(command, decrease) ? 0.5 : 1.0;
+
+  const moveCmd = ["move", "translate", "shift"];
+  const moveRightCmd = ["right", "east"];
+  const moveLeftCmd = ["left", "west"];
+  const moveUpCmd = ["up", "north"];
+  const moveDownCmd = ["down", "south"];
+
+  const translationX = (stringContainsAny(command, moveCmd) ? 1 : 0) 
+  * ((stringContainsAny(command, moveRightCmd) ? 1 : 0) + (stringContainsAny(command, moveLeftCmd) ? -1 : 0)) * multiplier * 0.25;
+
+  const translationY = (stringContainsAny(command, moveCmd) ? 1 : 0) 
+  * ((stringContainsAny(command, moveDownCmd) ? 1 : 0) + (stringContainsAny(command, moveUpCmd) ? -1 : 0)) * multiplier * 0.25;
+  
+  const rotateCmd = ["rotate", "turn", "spin", "twist"];
+  const rotateLeftCmd = ["left", "counterclockwise"];
+  const rotateRightCmd = ["right", "clockwise"];
+
+  const rotation = (stringContainsAny(command, rotateCmd) ? 1 : 0) 
+  * (stringContainsAny(command, rotateLeftCmd) ? -1 : 1) * multiplier * Math.PI * 0.25;
+
+  const scaleUp = ["scale up", "enlarge", "bigger"];
+  const scaleDown = ["scale down", "shrink", "smaller"];
+
+  const scale = ((stringContainsAny(command, scaleUp) ? 1 : 0) 
+  + (stringContainsAny(command, scaleDown) ? -1 : 0)) * multiplier * 0.5;
+
+  let incrementMatrix = getTransformMatrix(0, scale + 1, scale + 1, translationX, translationY);
+
+  incrementMatrix = math.subtract(incrementMatrix, math.identity(3));
+
+  if(math.deepEqual(incrementMatrix, math.zeros(3,3)))
+    return; // no-op
+
+ alert("Applying transformation:\n" +
+        "Translation: (" + translationX.toFixed(2) + ", " + translationY.toFixed(2) + ")\n" +
+        "Rotation: " + rotation.toFixed(2) + " turns\n" +
+        "Scale: " + scale.toFixed(2));
+
+
+  aiTargetMatrix = math.add(aiTargetMatrix, incrementMatrix);
+  aiTargetMatrix = math.multiply(aiTargetMatrix, getTransformMatrix(rotation, 1, 1, 0, 0)); // apply rotation
+
+  aiCoroutine = transformRoutine();
+}
+
+function* transformRoutine() {
+  regressor.setRestingOutputFromSliders(sliders.map(s => s.value()));
+  
+  const minLoss = 0.11;
+  let iterations = 0;
+  const maxIterations = 500;
+
+  while (trainingStep(aiTargetMatrix) > minLoss && iterations < maxIterations) {
+    iterations++;
+    yield;
+  }
 }
 
 function updateMatrix() {
@@ -125,15 +200,14 @@ function draw()
 {
   background(120);
 
-
-  if (training)
-  {
-    let cutout = library.get(currentCutoutIndex);
-        
-    trainingLoss = trainingStep(cutout.targetMatrix);
-  }
-
   updateMatrix();
+
+  if (aiCoroutine) {
+    if (aiCoroutine.next().done) 
+      aiCoroutine = null;
+  } 
+  else if (M) aiTargetMatrix = M.clone();
+
 
   for(let i = 0; i < currentCutoutIndex; i++)
   {
@@ -167,14 +241,14 @@ function draw()
     MClone.set([0,2], (MClone.get([0,2]) * cw + cw));
     MClone.set([1,2], (MClone.get([1,2]) * ch + ch));
 
-    const pos = transformPoint(MClone, localX, localY);
-    // Draw confirm button
-    if(success)
-      confirmButton.draw("Confirm", pos.x, pos.y, 100, 40);
-  }
-
   h += 80;
   text("Training loss: " + nf(trainingLoss, 1, 4), 10, h);
+
+  if (chatLine) chatLine.draw();
+
+  sliders.forEach(slider => slider.draw());
+
+} text("Training loss: " + nf(trainingLoss, 1, 4), 10, h);
 
   
 
@@ -189,8 +263,9 @@ function trainingStep(inputMatrix) // sample input matrix
   // Train one step with this matrix
   lastLoss = regressor.trainStep(inputMatrix);
 
-  
   text("Target Matrix:\n" + matrixToString(inputMatrix), 500, 50);
+
+  text("loss: " + nf(lastLoss, 1, 4), 500, 250);
 
   // Get prediction for visualization
   lastPred = regressor.predict(inputMatrix);
