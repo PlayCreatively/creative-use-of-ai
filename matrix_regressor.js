@@ -16,13 +16,23 @@ class MatrixRegressor {
     this.inputSize = this.inRows * this.inCols;
     this.outputSize = options.outputSize ?? 6;
     this.hiddenUnits = options.hiddenUnits ?? 16;
-    this.learningRate = options.learningRate ?? 0.01;
+    this._learningRate = options.learningRate ?? 0.01;
 
     // Loss function: yPred [1, outputSize], context = arbitrary object
     this.lossFn = options.lossFn || this.defaultLossFn.bind(this);
 
-    this.optimizer = tf.train.adam(this.learningRate);
+    this.optimizer = tf.train.adam(this._learningRate);
     this.buildModel();
+  }
+
+  get learningRate() {
+    return this._learningRate;
+  }
+
+  set learningRate(val) {
+    this._learningRate = val;
+    if (this.optimizer)
+      this.optimizer.learningRate = val;
   }
 
   buildModel() {

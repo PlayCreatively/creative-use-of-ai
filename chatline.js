@@ -21,14 +21,14 @@ class ChatLine {
     this.sendButton = new SimpleButton();
   }
 
-  draw() {
+  draw(label = "Send") {
     // Button position
     let btnX = this.x + this.w - 70;
     let btnY = this.y;
     let btnW = 70;
     let btnH = this.h + 6; // Match input height roughly
     
-    this.sendButton.draw("Send", btnX, btnY, btnW, btnH);
+    this.sendButton.draw(label, btnX, btnY, btnW, btnH);
   }
 
   mousePressed() {
@@ -39,10 +39,10 @@ class ChatLine {
 
   submit() {
     let msg = this.input.value();
-    if (msg.trim() !== "") {
+    
       if (this.onSend) {
         this.onSend(msg);
-      }
+      
       this.input.value('');
     }
   }
