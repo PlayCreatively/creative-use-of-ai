@@ -199,11 +199,40 @@ function handleChatCommand(command) {
       xScale *= -1;
   }
 
-  // ----- Build target matrix ----- //
+  const shearCmd = ["shear", "skew"];
+  const shearXCmd = [" x", " x-", "horizontal"];
+  const shearYCmd = [" y", " y-", "vertical"];
+  const shearPosCmd = [" positive", "+", "clockwise", "right", "up"];
+  const shearNegCmd = [" negative", "-", "counterclockwise", "left", "down"];
 
+  let shearX = 0;
+  let shearY = 0;
+
+  if (stringContainsAny(command, shearCmd)) 
+  {
+    if (stringContainsAny(command, shearXCmd))
+      shearX = (stringContainsAny(command, shearNegCmd) ? -1 : 1) * 0.5 * multiplier;
+    
+    if (stringContainsAny(command, shearYCmd)) 
+      shearY = (stringContainsAny(command, shearNegCmd) ? -1 : 1) * 0.5 * multiplier;
+  }
+  
+  // ----- Build target matrix ----- //
+  
   // Apply global translation
   let translationMatrix = getTransformMatrix(0, 1, 1, translationX, translationY);
   aiTargetMatrix = math.multiply(translationMatrix, aiTargetMatrix);
+  
+  // Apply shear
+  if (shearX != 0 || shearY != 0) {
+    // Build shear matrix and apply
+    let shearM = math.matrix([
+      [1, -shearX, 0],
+      [-shearY, 1, 0],
+      [0, 0, 1]
+    ]);
+    aiTargetMatrix = math.multiply(shearM, aiTargetMatrix);
+  }
 
   // Apply local scaling and rotation
   // Combine to ensure Scale is applied before Rotation to avoid skewing
@@ -227,9 +256,9 @@ function* transformRoutine() {
 
   regressor.setRestingOutputFromSliders(sliders.map(s => s.value()));
   
-  const minLoss = 0.011;
-  let iterations = 0;
+  const minLoss = 0.05;
   const maxIterations = 500;
+  let iterations = 0;
 
   while (isTraining && trainingStep(aiTargetMatrix) > minLoss && iterations < maxIterations) {
 
@@ -340,7 +369,7 @@ function trainingStep(inputMatrix) // sample input matrix
   // Train one step with this matrix
   lastLoss = regressor.trainStep(inputMatrix);
 
-  // regressor.learningRate *= 0.9999; // decay learning rate over time
+  regressor.learningRate *= 0.999; // decay learning rate over time
 
   text("Target Matrix:\n" + matrixToString(inputMatrix), 500, 50);
 
