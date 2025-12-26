@@ -304,24 +304,15 @@ function calculateModelMatrixTF(sliderValues) {
     // --- 5. Special Rotation (HalfAngle1 + HalfAngle2) ---
     const PI = Math.PI;
     
-    // HalfAngle1 (s4) -> [cos, sin, 0; 0,0,0; 0,0,1]
     const a4 = s4.mul(PI);
-    const H1 = tf.stack([
-        tf.cos(a4), tf.sin(a4), zeros,
-        zeros,      zeros,      zeros,
-        zeros,      zeros,      ones
-    ], 1).reshape([batchSize, 3, 3]);
-
-    // HalfAngle2 (s5) -> [0,0,0; -sin, cos, 0; 0,0,0]
     const a5 = s5.mul(PI);
-    const H2 = tf.stack([
-        zeros,             zeros,      zeros,
-        tf.sin(a5).neg(),  tf.cos(a5), zeros,
-        zeros,             zeros,      zeros
+    const M4 = tf.stack([
+        tf.cos(a4),       tf.sin(a4), zeros,
+        tf.sin(a5).neg(), tf.cos(a5), zeros,
+        zeros,            zeros,      ones
     ], 1).reshape([batchSize, 3, 3]);
 
-    // Combine and multiply
-    M = M.matMul(H1.add(H2));
+    M = M4.matMul(M);
 
     return M;
   });
