@@ -117,7 +117,10 @@ function handleChatCommand(command) {
     return;
   }
 
-  aiTargetMatrix = parseCommand(command);
+  aiTargetMatrix = parseCommand(command, M);
+  
+  if (!aiTargetMatrix)
+    return;
   
   aiCoroutine = transformRoutine();
 }

@@ -1,4 +1,4 @@
-function parseCommand(command) {
+function parseCommand(command, M) {
 
   command = command.toLowerCase();
 
@@ -102,8 +102,9 @@ function parseCommand(command) {
   // ----- Build target matrix ----- //
   
   // Apply global translation
+  let aiTargetMatrix = M.clone();
   let translationMatrix = getTransformMatrix(0, 1, 1, translationX, translationY);
-  let aiTargetMatrix = math.multiply(translationMatrix, aiTargetMatrix);
+  aiTargetMatrix = math.multiply(translationMatrix, aiTargetMatrix);
   
   // Apply shear
   if (shearX != 0 || shearY != 0) {
@@ -122,13 +123,12 @@ function parseCommand(command) {
   aiTargetMatrix = math.multiply(aiTargetMatrix, localMatrix);
 
   if(math.deepEqual(aiTargetMatrix, M))
-    return; // no-op
+    return null; // no-op
 
 //  alert("Applying transformation:\n" +
 //         "Translation: (" + translationX.toFixed(2) + ", " + translationY.toFixed(2) + ")\n" +
 //         "Rotation: " + rotation.toFixed(2) + " turns\n" +
 //         "Scale: " + scale.toFixed(2));
 
-  
-  aiCoroutine = transformRoutine();
+  return aiTargetMatrix;
 }
