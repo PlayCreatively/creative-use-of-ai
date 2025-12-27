@@ -1,5 +1,7 @@
 const sliderCount = 5;
 let sliders = [];
+let selectedSlider = null;
+
 let M; // our 3x3 matrix
 
 let width = 1400;
@@ -41,7 +43,10 @@ function windowResized()
 }
 
 function mousePressed() {
-  sliders.forEach(slider => slider.handleMousePressed());
+  const lastSelectedSlider = selectedSlider;
+  selectedSlider = null;
+
+  sliders.forEach(slider => { if (slider.handleMousePressed(slider === lastSelectedSlider)) selectedSlider = slider; });
   
   if (chatLine) chatLine.mousePressed();
 
@@ -64,7 +69,7 @@ function mousePressed() {
 }
 
 function mouseDragged() {
-  sliders.forEach(slider => slider.handleMouseDragged());
+  sliders.forEach(slider => { if (slider.handleMouseDragged(slider === selectedSlider)) selectedSlider = slider; });
 }
 
 function mouseReleased() {
@@ -252,6 +257,8 @@ function draw()
   }
 
   sliders.forEach(slider => slider.draw());
+  if(selectedSlider)
+    selectedSlider.drawGizmos();
 
   if(!fullscreen())
     fullscreenButton.draw("Fullscreen", width - 120, height - 50, 100, 30);

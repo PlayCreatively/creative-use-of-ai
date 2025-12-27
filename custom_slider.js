@@ -94,8 +94,8 @@ class FancySlider {
 
   // --- interaction ---
 
-  updateHover() {
-    this.hover = this.isMouseOverTrack() || this.isMouseOverAnyGizmo();
+  updateHover(isSelected) {
+    this.hover = this.isMouseOverTrack() || (this.isMouseOverAnyGizmo() && isSelected);
   }
 
   updateValueFromMouse() {
@@ -104,13 +104,19 @@ class FancySlider {
     this.v = constrain(t, -1, 1);
   }
 
-  handleMousePressed() {
-    this.updateHover();
-
-    if (!this.hover) return;
-
-    // 1. ROTATE GIZMO
-    if (this.isMouseOverGizmo(0)) {
+  handleMousePressed(isSelected) {
+    this.updateHover(isSelected);
+    
+    if (!this.hover) return false;
+    
+    // TRACK DRAG
+    if (this.isMouseOverTrack()) {
+      this.draggingThumb = true;
+      this.updateValueFromMouse();
+    }
+    
+    // ROTATE GIZMO
+    else if (this.isMouseOverGizmo(0)) {
       this.draggingRotate = true;
       
       // Calculate the angle from the center of the slider to the mouse
@@ -122,34 +128,30 @@ class FancySlider {
       // This ensures that if you grab the handle slightly off-center, 
       // the slider doesn't "snap" to align perfectly with the mouse immediately.
       this.dragAngleOffset = this.angle - mouseAngle;
-      return;
     }
 
-    // 2. TOGGLE GIZMO
-    if (this.isMouseOverGizmo(1)) {
+    // TOGGLE GIZMO
+    else if (this.isMouseOverGizmo(1)) {
       this.enabled = !this.enabled;
-      return;
     }
 
-    // 3. MOVE GIZMO
-    if (this.isMouseOverGizmo(2)) {
+    // MOVE GIZMO
+    else if (this.isMouseOverGizmo(2)) {
       this.draggingMove = true;
       this.dragOffsetX = mouseX - this.x;
       this.dragOffsetY = mouseY - this.y;
-      return;
     }
 
-    // 4. TRACK DRAG
-    if (this.isMouseOverTrack()) {
-      this.draggingThumb = true;
-      this.updateValueFromMouse();
-    }
+    return true;
   }
 
-  handleMouseDragged() {
+  handleMouseDragged(isSelected) {
     if (this.draggingThumb) {
       this.updateValueFromMouse();
       
+    } else if (!isSelected) {
+      return false;
+
     } else if (this.draggingRotate) {
       // Calculate new mouse angle relative to slider center
       let dx = mouseX - this.x;
@@ -162,7 +164,9 @@ class FancySlider {
     } else if (this.draggingMove) {
       this.x = mouseX - this.dragOffsetX;
       this.y = mouseY - this.dragOffsetY;
-    }
+
+    } else return false;
+    return true;
   }
 
   handleMouseReleased() {
@@ -203,8 +207,6 @@ class FancySlider {
   }
 
   drawGizmos() {
-    if (!this.hover && !this.draggingRotate && !this.draggingMove) return;
-
     push();
 
     textAlign(CENTER, CENTER);
@@ -243,6 +245,5 @@ class FancySlider {
   draw() {
     this.updateHover();
     this.drawTrackAndThumb();
-    this.drawGizmos();
   }
 }
