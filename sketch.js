@@ -1,22 +1,13 @@
-// slider operations:
-// translates in local space
-// rotates around origin
-// scales from origin
-
-
-// idea. Maybe the sliders can be moved and rotated around to allow the player to create their own workstation that's 
-// more intuitive for them. This would allow them to take ownership of the work.
-// in addition to moving and rotating them, have a curve value that can create bends as well as a circle.
-
-// after computing the new slider configuration, we can iterate over each slider at a time and interpolate to its new value
-// hopefully showing a nonsensical set of transformations that eventually converge to the desired one.
-
-const sliderCount = 6;
+const sliderCount = 5;
 let sliders = [];
 let M; // our 3x3 matrix
 
-const width = 1400;
-const height = 700;
+let width = 1400;
+let height = 700;
+
+const windowed = {width: 1400, height: 700};
+
+const detectionThreshold = .5;
 
 let regressor;
 const ROWS = 3;
@@ -29,18 +20,35 @@ let aiTargetMatrix = math.identity(3);
 
 let currentCutoutIndex = 0;
 let library;
-let confirmButton = new SimpleButton();
+const confirmButton = new SimpleButton();
+const fullscreenButton = new SimpleButton();
 let chatLine;
 let isTraining = false;
 
 function preload() {
-  library = new CutoutLibrary("cutouts.json", {width: width, height: height});
+  library = new CutoutLibrary("cutouts.json");
+}
+
+function windowResized() 
+{  
+  // Check if p5 thinks we are fullscreen OR if the window size matches the screen size (F11)
+  const isF11 = windowWidth >= screen.width && windowHeight >= screen.height;
+
+  const fs = fullscreen() || isF11;
+  width = fs ? windowWidth : windowed.width;
+  height = fs ? windowHeight : windowed.height;
+  resizeCanvas(width, height);
 }
 
 function mousePressed() {
   sliders.forEach(slider => slider.handleMousePressed());
   
   if (chatLine) chatLine.mousePressed();
+
+  if (fullscreenButton.isHovering(mouseX, mouseY)) {
+    const fs = !fullscreen();
+    fullscreen(fs);
+  }
 
   if (confirmButton.isHovering(mouseX, mouseY)) {
 
@@ -75,13 +83,12 @@ async function setup() {
     v = random(-1.0, 1.0);
     
     sliders[i] = new FancySlider(150, 30 + i * 30, 200, i % 2 == 0 ? 0 : PI);
-    // contune training when user releases slider
   }
 
-  resetSliders();
+  // resetSliders();
   
   // Initialize ChatLine at the bottom
-  chatLine = new ChatLine(50, height - 50, 400, 30, handleChatCommand);
+  chatLine = new ChatLine(400, 30, handleChatCommand);
   
   noStroke();
   
@@ -91,13 +98,12 @@ async function setup() {
     inRows: ROWS,
     inCols: COLS,
     outputSize: sliderCount,
-    hiddenUnits: 9,
+    hiddenUnits: 1,
     learningRate: 0.05,
     lossFn: (yPred, context) => {   
       // Map 0..1 output to -1..1 range to match sliders
       const mappedPred = yPred.mul(2).sub(1);
 
-      // Use the unified TF function
       let m = calculateModelMatrixTF(mappedPred); 
       const target = mathMatrixToTFMatrix(context.inputMatrix);
       const loss = m.sub(target).abs().sum();
@@ -118,7 +124,7 @@ function handleChatCommand(command) {
   }
 
   aiTargetMatrix = parseCommand(command, M);
-  
+
   if (!aiTargetMatrix)
     return;
   
@@ -132,13 +138,32 @@ function* transformRoutine() {
   
   const minLoss = 0.05;
   const maxIterations = 500;
+  const movingAvgWindow = 30;
   let iterations = 0;
+  let lastLoss = 0;
+  let loss = 0;
+  let SMA_lossDelta_sum = 0;
+  let lossDeltas = [];
 
-  while (isTraining && trainingStep(aiTargetMatrix) > minLoss && iterations < maxIterations) {
+  while (isTraining && (loss = trainingStep(aiTargetMatrix)) > minLoss && iterations < maxIterations) {
 
-    library.get(currentCutoutIndex).drawTarget(aiTargetMatrix);
+    const lossDelta = lastLoss - loss;
+
+    // Simple Moving Average over last 10 loss deltas
+    SMA_lossDelta_sum += lossDelta;
+    lossDeltas.push(lossDelta);
+    if (lossDeltas.length > movingAvgWindow) {
+      SMA_lossDelta_sum -= lossDeltas.shift();
+    }
+
+    const SMA_lossDelta = SMA_lossDelta_sum / movingAvgWindow;
+
+    // JUST FOR DEBUGGING
+    // library.get(currentCutoutIndex).drawTarget(aiTargetMatrix);
 
     iterations++;
+
+    lastLoss = loss;
     yield;
   }
 
@@ -196,11 +221,8 @@ function draw()
       cutout.drawAtTarget();
   }
 
-  let cutout = library.get(currentCutoutIndex);
+  const cutout = library.get(currentCutoutIndex);
   
-  let h = 30 * (sliderCount + 1);
-
-  text("Current Transformation Matrix:\n" + matrixToString(M), 50, h);
   if (cutout) {
     
     // Draw the target silhouette and check against current matrix M
@@ -221,18 +243,18 @@ function draw()
     MClone.set([0,2], (MClone.get([0,2]) * ch + cw));
     MClone.set([1,2], (MClone.get([1,2]) * ch + ch));
 
-  h += 80;
-  text("Training loss: " + nf(trainingLoss, 1, 4), 10, h);
+    const pos = transformPoint(MClone, localX, localY);
+    // Draw confirm button
+    if(success)
+      confirmButton.draw("Confirm", pos.x, pos.y, 100, 40);
 
-  if (chatLine) chatLine.draw(isTraining ? "Stop" : "Send");
-
-  sliders.forEach(slider => slider.draw());
-
-} text("Training loss: " + nf(trainingLoss, 1, 4), 10, h);
-
-  
+    if (chatLine) chatLine.draw(50, height - 50, isTraining ? "Stop" : "Send");
+  }
 
   sliders.forEach(slider => slider.draw());
+
+  if(!fullscreen())
+    fullscreenButton.draw("Fullscreen", width - 120, height - 50, 100, 30);
 
 }
 
@@ -243,7 +265,7 @@ function trainingStep(inputMatrix) // sample input matrix
   // Train one step with this matrix
   lastLoss = regressor.trainStep(inputMatrix);
 
-  regressor.learningRate *= 0.999; // decay learning rate over time
+  // regressor.learningRate *= 0.999; // decay learning rate over time
 
   text("Target Matrix:\n" + matrixToString(inputMatrix), 500, 50);
 
@@ -260,7 +282,7 @@ function trainingStep(inputMatrix) // sample input matrix
 
 function calculateModelMatrixTF(sliderValues) {
   return tf.tidy(() => {
-    // Ensure input is 2D: [batchSize, 6]
+    // Ensure sliderValues is 2D tensor [batchSize, sliderCount]
     let vals = sliderValues;
     if (sliderValues.rank === 1) {
       vals = sliderValues.expandDims(0);
@@ -269,9 +291,11 @@ function calculateModelMatrixTF(sliderValues) {
     const batchSize = vals.shape[0];
     const zeros = tf.zeros([batchSize, 1]);
     const ones = tf.ones([batchSize, 1]);
+    const PI = Math.PI;
+
 
     // Split sliders into individual columns [batch, 1]
-    const [s0, s1, s2, s3, s4, s5] = tf.split(vals, 6, 1);
+    const [s0, s1, s2, s3, s4] = tf.split(vals, sliderCount, 1);
 
     // Helper: Build 3x3 matrix from components
     // [ sx*cos -sy*sin tx ]
@@ -290,32 +314,34 @@ function calculateModelMatrixTF(sliderValues) {
     };
 
     // --- 1. Scale (1+v, 1+v) ---
-    let M = makeMat(zeros, s0.add(1), s0.add(1), zeros, zeros);
-
-    // --- 2. Translate Y (v) ---
-    let M1 = makeMat(zeros, ones, ones, zeros, s1);
+    let M = makeMat(zeros, ones, ones, zeros, zeros);
+    const M1 = makeMat(zeros, s0.add(1), s0.add(1), zeros, zeros);
     M = M1.matMul(M);
 
-    // --- 3. Rotate (v*PI) ---
-    let M2 = makeMat(s2.mul(Math.PI), ones, ones, zeros, zeros);
-    M = M2.matMul(M);
-
-    // --- 4. Scale (1+v, 1+v) ---
-    let M3 = makeMat(zeros, s3.add(1), s3.add(1), zeros, zeros);
-    M = M3.matMul(M);
-
     // --- 5. Special Rotation (HalfAngle1 + HalfAngle2) ---
-    const PI = Math.PI;
     
-    const a4 = s4.mul(PI);
-    const a5 = s5.mul(PI);
+    const a1 = s2.mul(PI);
+    const a2 = s3.mul(PI);
     const M4 = tf.stack([
-        tf.cos(a4),       tf.sin(a4), zeros,
-        tf.sin(a5).neg(), tf.cos(a5), zeros,
+        tf.cos(a1),       tf.sin(a1), zeros,
+        tf.sin(a2).neg(), tf.cos(a2), zeros,
         zeros,            zeros,      ones
     ], 1).reshape([batchSize, 3, 3]);
 
     M = M4.matMul(M);
+
+
+    // --- 6. Orbit-like Transformation ---
+    
+    const a3 = s4.mul(PI);
+    const M5 = tf.stack([
+        ones,  zeros, tf.cos(a3).mul(s1),
+        zeros, ones,  tf.sin(a3).mul(s1),
+        zeros, zeros, ones
+    ], 1).reshape([batchSize, 3, 3]);
+
+    
+    M = M.matMul(M5);
 
     return M;
   });

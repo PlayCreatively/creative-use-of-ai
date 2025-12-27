@@ -11,7 +11,7 @@ function parseCommand(command, M) {
 
   // ----- Translation ----- //
 
-  const moveCmd = ["move", "translate", "shift"];
+  const moveCmd = ["move", "go", "translate", "shift"];
   const moveRightCmd = ["right", "east"];
   const moveLeftCmd = ["left", "west"];
   const moveUpCmd = ["up", "north"];
@@ -35,8 +35,8 @@ function parseCommand(command, M) {
 
   // ----- Scaling ----- //
 
-  const scaleUp = ["scale up", "enlarge", "bigger"];
-  const scaleDown = ["scale down", "shrink", "smaller"];
+  const scaleUp = ["scale up", "increase size", "enlarge", "bigger"];
+  const scaleDown = ["scale down", "decrease size", "shrink", "smaller"];
   
   const scale = ((stringContainsAny(command, scaleUp) ? 1 : 0) 
   + (stringContainsAny(command, scaleDown) ? -1 : 0)) * multiplier * 0.5;

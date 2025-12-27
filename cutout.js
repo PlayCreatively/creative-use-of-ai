@@ -1,12 +1,11 @@
 class CutoutLibrary {
-  constructor(jsonPath, canvasSize) {
+  constructor(jsonPath) {
     this.cutouts = [];
-    this.canvasSize = canvasSize;
     // Load the JSON file
     loadJSON(jsonPath, (data) => {
       // Iterate over the array in the JSON
       for (let item of data) {
-        this.cutouts.push(new Cutout(item, canvasSize));
+        this.cutouts.push(new Cutout(item));
       }
     });
   }
@@ -26,16 +25,13 @@ class CutoutLibrary {
 }
 
 class Cutout {
-  constructor(data, canvasSize) {
+  constructor(data) {
     this.imageName = data.imageName;
     this.scaleFactor = data.scale || 1.0;
     
     // Parse the target matrix from the JSON array
     // Assuming data.targetMatrix is a 3x3 array of numbers
     this.targetMatrix = math.matrix(data.targetMatrix);
-    
-    this.cw = canvasSize.width / 2;
-    this.ch = canvasSize.height / 2;
 
     // Load the image
     this.img = loadImage(this.imageName);
@@ -47,7 +43,7 @@ class Cutout {
   drawTarget(inputMatrix) {
     let isClose = this.isCloseEnough(inputMatrix);
 
-    tint(0);
+    tint(0, 150);
     this.drawAtTarget();
     tint(255);
 
@@ -63,10 +59,15 @@ class Cutout {
     let copyMatrix = positionMatrix.clone();
 
     push();
+
+    console.assert(width && height, "Canvas size must be defined");
+
+    const cw = width / 2;
+    const ch = height / 2;
     
     // center in canvas and scale position matrix to canvas coords
-    copyMatrix.set([0,2], (copyMatrix.get([0,2]) * this.cw + this.cw));
-    copyMatrix.set([1,2], (copyMatrix.get([1,2]) * this.ch + this.ch));
+    copyMatrix.set([0,2], (copyMatrix.get([0,2]) * cw + cw));
+    copyMatrix.set([1,2], (copyMatrix.get([1,2]) * ch + ch));
     
     // Apply the given position matrix
     this.applyMathMatrix(copyMatrix);
@@ -83,7 +84,7 @@ class Cutout {
 
   drawAtTarget()
   {
-	this.drawAt(this.targetMatrix);
+	  this.drawAt(this.targetMatrix);
   }
 
   // Helper to check if input matrix is close to target matrix
@@ -102,9 +103,7 @@ class Cutout {
       diffSum += Math.abs(value);
     });
     
-    const threshold = 1.25; 
-    
-    return diffSum < threshold;
+    return diffSum < detectionThreshold;
   }
 
   // Helper to apply a math.js matrix to p5 context
