@@ -22,17 +22,22 @@ let currentCutoutIndex = 0;
 let library;
 const confirmButton = new SimpleButton();
 const fullscreenButton = new SimpleButton();
+let AI_mascotIMG;
 let chatLine;
 let settingsGUI;
 let isTraining = false;
+let amplitude;
 
 function preload() {
   library = new CutoutLibrary("cutouts.json");
+  AI_mascotIMG = loadImage('images/ai mascot [Gemini Generated].png');
+
+  preloadVoiceLines();
 }
 
 function windowResized() 
 {  
-  // Check if p5 thinks we are fullscreen OR if the window size matches the screen size (F11)
+  // Check if p5 thinks we are fullscreen OR if the window size matches the window size (F11)
   const isF11 = windowWidth >= screen.width && windowHeight >= screen.height;
 
   const fs = fullscreen() || isF11;
@@ -85,6 +90,9 @@ function resetSliders() {
 async function setup() {
   createCanvas(width, height);
 
+  // Initialize audio analyzer with smoothing (0.0 - 0.99)
+  amplitude = new p5.Amplitude(0.8);
+
   for (let i = 0; i < sliderCount; i++) {
     //random 
     v = random(-1.0, 1.0);
@@ -125,7 +133,7 @@ async function setup() {
     
     createP("Introducing v8.0 🥳🥂🍾</br></br>").parent(container);
     createP("We’ve officially retired the <i>old</i> way of working. You know—thinking, tweaking, deciding.").parent(container);
-    createP("Welcome to the future, where effort is optional and outcomes are guaranteed. Simply describe what you want, sit back, and let our AI handle everything else. No sliders. No settings. No understanding required.").parent(container);
+    createP("Welcome to the future, where effort is optional and outcomes are guaranteed. Simply use natural language to describe the transformations you want, sit back, and let our AI handle everything else. No sliders. No settings. No understanding required.").parent(container);
     createP("Why wrestle with tools when you can issue wishes?<br/>Why learn a process when you can skip straight to results?").parent(container);
     createP("With our latest update, you can now simply type in your desired transformations, and our AI will take care of the rest. No more manual adjustments—just pure creativity at your fingertips!").parent(container);
     createP("v8.0 doesn’t just streamline your workflow—it removes it entirely.<br/>Creativity, fully automated. Confidence, pre-installed.").parent(container);
@@ -143,8 +151,6 @@ async function setup() {
     img.style('margin', '10px auto');
     img.style('border-radius', '5px');
   })
-
-  fullscreen(true);
 }
 
 
@@ -161,6 +167,8 @@ function handleChatCommand(command) {
 
   if (!aiTargetMatrix)
     return;
+
+  playVoiceLine("command");
   
   aiCoroutine = transformRoutine();
 }
@@ -233,6 +241,18 @@ function draw()
   fill(180,50,50);
 
   text("Do anything with AI!", 650, 90);
+
+  // AI mascot
+  push();
+  imageMode(CENTER);
+  
+  // Audio reactive scaling
+  let level = amplitude.getLevel();
+  // Map volume (0 to 0.2) to scale (1.0 to 1.2)
+  let scaleFactor = map(level, 0, 0.2, 0, 20, true);
+
+  image(AI_mascotIMG, 150, height - 100 - scaleFactor * .5, 130 - scaleFactor, 150 + scaleFactor);
+  pop();
 
   // reset font size
   textSize(13);

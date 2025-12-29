@@ -7,6 +7,8 @@ class ChatLine {
     this.input = createInput('');
     this.input.size(w - 80, h); 
     this.input.style('font-size', '16px');
+    this.input.style('border-radius', '8px');
+    this.input.style('border-color', 'transparent');
     
     // Handle Enter key
     this.input.elt.addEventListener("keypress", (event) => {
