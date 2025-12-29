@@ -9,8 +9,6 @@ let height = 700;
 
 const windowed = {width: 1400, height: 700};
 
-const detectionThreshold = .05;
-
 let regressor;
 const ROWS = 3;
 const COLS = 3;
@@ -25,6 +23,7 @@ let library;
 const confirmButton = new SimpleButton();
 const fullscreenButton = new SimpleButton();
 let chatLine;
+let settingsGUI;
 let isTraining = false;
 
 function preload() {
@@ -42,7 +41,10 @@ function windowResized()
   resizeCanvas(width, height);
 }
 
-function mousePressed() {
+function mousePressed(e) {
+  // Prevent p5 interaction when clicking on DOM elements (like the settings menu)
+  if (e && e.target && e.target.tagName !== 'CANVAS') return;
+
   const lastSelectedSlider = selectedSlider;
   selectedSlider = null;
 
@@ -63,7 +65,7 @@ function mousePressed() {
     currentCutoutIndex++;
     resetSliders();
     if (currentCutoutIndex >= library.count()) {
-        currentCutoutIndex = 0; 
+      currentCutoutIndex = 0; 
     }
   }
 }
@@ -87,7 +89,7 @@ async function setup() {
     //random 
     v = random(-1.0, 1.0);
     
-    sliders[i] = new FancySlider(150, 30 + i * 30, 200, i % 2 == 0 ? 0 : PI);
+    sliders[i] = new FancySlider(150, 100 + i * 30, 200, i % 2 == 0 ? 0 : PI);
   }
 
   // resetSliders();
@@ -95,6 +97,9 @@ async function setup() {
   // Initialize ChatLine at the bottom
   chatLine = new ChatLine(400, 30, handleChatCommand);
   
+  // Initialize Settings GUI
+  settingsGUI = new SettingsGUI();
+
   noStroke();
   
   await tf.ready();
@@ -115,7 +120,31 @@ async function setup() {
       return loss; 
     }
   });
+  
+  settingsGUI.openModal('New Update!', (container) => {
+    
+    createP("Introducing v8.0 🥳🥂🍾</br></br>").parent(container);
+    createP("We’ve officially retired the <i>old</i> way of working. You know—thinking, tweaking, deciding.").parent(container);
+    createP("Welcome to the future, where effort is optional and outcomes are guaranteed. Simply describe what you want, sit back, and let our AI handle everything else. No sliders. No settings. No understanding required.").parent(container);
+    createP("Why wrestle with tools when you can issue wishes?<br/>Why learn a process when you can skip straight to results?").parent(container);
+    createP("With our latest update, you can now simply type in your desired transformations, and our AI will take care of the rest. No more manual adjustments—just pure creativity at your fingertips!").parent(container);
+    createP("v8.0 doesn’t just streamline your workflow—it removes it entirely.<br/>Creativity, fully automated. Confidence, pre-installed.").parent(container);
 
+    let caption = createP("Let us do the work...");
+    caption.parent(container);
+    caption.style('font-weight', 'bold');
+    caption.style('font-size', '1.5em');
+
+    // Image
+    let img = createImg('images/we can do it [Gemini Generated].jpeg', 'We can do it');
+    img.parent(container);
+    img.style('display', 'block');
+    img.style('width', '40%');
+    img.style('margin', '10px auto');
+    img.style('border-radius', '5px');
+  })
+
+  fullscreen(true);
 }
 
 
@@ -203,7 +232,7 @@ function draw()
   textSize(32);
   fill(180,50,50);
 
-  text("Do anything with AI!", 650, 30);
+  text("Do anything with AI!", 650, 90);
 
   // reset font size
   textSize(13);
@@ -231,7 +260,7 @@ function draw()
   if (cutout) {
     
     // Draw the target silhouette and check against current matrix M
-    let {isClose, diffSum} = cutout.drawTarget(M);
+    let diffSum = cutout.drawTarget(M);
     
     // Calculate button position
     const s = cutout.scaleFactor;
@@ -252,7 +281,7 @@ function draw()
 
     // Draw closeness percentage
     const maxDiff = 2;
-    diffSum = math.max(0, diffSum - (detectionThreshold * maxDiff)); // allow some leeway
+    diffSum = math.max(0, diffSum - .05); // allow some leeway
     const perc = (Math.max(0, 1 - diffSum / maxDiff)) * 100;
     const isPerfect = perc >= 99.5;
 
@@ -261,7 +290,7 @@ function draw()
     fill(isPerfect ? 255 : 0);
 
     // Draw confirm button
-    if(isClose)
+    if(isPerfect)
       confirmButton.draw("Confirm", pos.x + 50, pos.y - 22, 100, 40, isPerfect ? 'white' : 'black');
 
     textSize(20);

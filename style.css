@@ -5,3 +5,133 @@ html, body {
 canvas {
   display: block;
 }
+
+/* --- Top Bar GUI Styles --- */
+
+#top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 35px;
+  background-color: #2d2d2d; /* Dark grey like VS Code */
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  z-index: 9999; /* Ensure it's on top of p5 canvas */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Menu Item Container */
+.menu-item {
+  position: relative;
+  display: inline-block;
+  height: 100%;
+}
+
+/* Menu Button (File, Edit, etc.) */
+.menu-btn {
+  background-color: transparent;
+  color: #cccccc;
+  padding: 0 15px;
+  height: 100%;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.menu-btn:hover {
+  background-color: #3e3e3e;
+  color: white;
+}
+
+/* Dropdown Content (Hidden by default) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #252526;
+  min-width: 180px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.3);
+  z-index: 10000;
+  border: 1px solid #454545;
+  border-radius: 0 0 4px 4px;
+  padding: 5px 0;
+}
+
+/* Links/Buttons inside the dropdown */
+.dropdown-content button {
+  color: #cccccc;
+  padding: 8px 16px;
+  text-decoration: none;
+  display: block;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content button:hover {
+  background-color: #094771; /* VS Code blue highlight */
+  color: white;
+}
+
+/* Show the dropdown menu on hover */
+.menu-item:hover .dropdown-content {
+  display: block;
+}
+
+/* --- Modal Styles --- */
+.modal-overlay {
+  display: none; /* Hidden by default */
+  position: fixed;
+  z-index: 20000; /* Higher than top-bar */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: #252526;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #454545;
+  width: 50%;
+  min-width: 300px;
+  color: #cccccc;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+  position: relative;
+  border-radius: 5px;
+}
+
+.modal-content p {
+  margin: .7rem 3rem;
+}
+
+.close-btn {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+}

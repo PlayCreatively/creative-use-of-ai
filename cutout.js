@@ -41,8 +41,6 @@ class Cutout {
   // Checks if inputMatrix is close to targetMatrix.
   // Returns true if close, false otherwise.
   drawTarget(inputMatrix) {
-    let {isClose, diffSum} = this.isCloseEnough(inputMatrix);
-
     tint(0, 150);
     this.drawAtTarget();
     tint(255);
@@ -50,7 +48,7 @@ class Cutout {
     // draw actual image //
   	this.drawAt(inputMatrix);
 
-    return {isClose, diffSum};
+    return this.getDiffSum(inputMatrix);
   }
 
   // Draws the image using a given position matrix
@@ -88,9 +86,7 @@ class Cutout {
   }
 
   // Helper to check if input matrix is close to target matrix
-  isCloseEnough(inputMatrix) {
-    if (!inputMatrix) return false;
-
+  getDiffSum(inputMatrix) {
     // Calculate element-wise difference
     let diff = math.subtract(this.targetMatrix, inputMatrix);
     
@@ -103,7 +99,7 @@ class Cutout {
       diffSum += Math.abs(value);
     });
     
-    return {isClose: diffSum < detectionThreshold, diffSum: diffSum};
+    return diffSum;
   }
 
   // Helper to apply a math.js matrix to p5 context
