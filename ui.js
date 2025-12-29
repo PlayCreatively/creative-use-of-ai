@@ -4,7 +4,7 @@ class SimpleButton {
   }
 
   // Call this inside draw()
-  draw(label, x, y, w, h) {
+  draw(label, x, y, w, h, labelColor = 'black') {
     this.bounds = { x, y, w, h };
     
     push();
@@ -15,13 +15,12 @@ class SimpleButton {
     else
       fill(200);
     
-    stroke(0);
     rect(0, 0, w, h, 5);
     
     fill(0);
-    noStroke();
     textAlign(CENTER, CENTER);
     textSize(16);
+    fill(labelColor);
     text(label, w/2, h/2);
     
     pop();

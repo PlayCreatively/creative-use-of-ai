@@ -41,7 +41,7 @@ class Cutout {
   // Checks if inputMatrix is close to targetMatrix.
   // Returns true if close, false otherwise.
   drawTarget(inputMatrix) {
-    let isClose = this.isCloseEnough(inputMatrix);
+    let {isClose, diffSum} = this.isCloseEnough(inputMatrix);
 
     tint(0, 150);
     this.drawAtTarget();
@@ -50,7 +50,7 @@ class Cutout {
     // draw actual image //
   	this.drawAt(inputMatrix);
 
-    return isClose;
+    return {isClose, diffSum};
   }
 
   // Draws the image using a given position matrix
@@ -66,7 +66,7 @@ class Cutout {
     const ch = height / 2;
     
     // center in canvas and scale position matrix to canvas coords
-    copyMatrix.set([0,2], (copyMatrix.get([0,2]) * cw + cw));
+    copyMatrix.set([0,2], (copyMatrix.get([0,2]) * ch + cw));
     copyMatrix.set([1,2], (copyMatrix.get([1,2]) * ch + ch));
     
     // Apply the given position matrix
@@ -103,7 +103,7 @@ class Cutout {
       diffSum += Math.abs(value);
     });
     
-    return diffSum < detectionThreshold;
+    return {isClose: diffSum < detectionThreshold, diffSum: diffSum};
   }
 
   // Helper to apply a math.js matrix to p5 context

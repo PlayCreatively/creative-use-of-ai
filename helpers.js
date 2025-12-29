@@ -1,5 +1,3 @@
-const { get } = require("http");
-
 function applyMatrixM(M)
 {
   const a = M.get([0, 0]);

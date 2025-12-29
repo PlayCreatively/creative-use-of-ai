@@ -9,7 +9,7 @@ let height = 700;
 
 const windowed = {width: 1400, height: 700};
 
-const detectionThreshold = .5;
+const detectionThreshold = .05;
 
 let regressor;
 const ROWS = 3;
@@ -142,7 +142,7 @@ function* transformRoutine() {
   regressor.setRestingOutputFromSliders(sliders.map(s => s.value()));
   
   const minLoss = 0.05;
-  const maxIterations = 500;
+  const maxIterations = 300;
   const movingAvgWindow = 30;
   let iterations = 0;
   let lastLoss = 0;
@@ -231,7 +231,7 @@ function draw()
   if (cutout) {
     
     // Draw the target silhouette and check against current matrix M
-    let success = cutout.drawTarget(M);
+    let {isClose, diffSum} = cutout.drawTarget(M);
     
     // Calculate button position
     const s = cutout.scaleFactor;
@@ -249,9 +249,27 @@ function draw()
     MClone.set([1,2], (MClone.get([1,2]) * ch + ch));
 
     const pos = transformPoint(MClone, localX, localY);
+
+    // Draw closeness percentage
+    const maxDiff = 2;
+    diffSum = math.max(0, diffSum - (detectionThreshold * maxDiff)); // allow some leeway
+    const perc = (Math.max(0, 1 - diffSum / maxDiff)) * 100;
+    const isPerfect = perc >= 99.5;
+
+    push(); // push settings
+
+    fill(isPerfect ? 255 : 0);
+
     // Draw confirm button
-    if(success)
-      confirmButton.draw("Confirm", pos.x, pos.y, 100, 40);
+    if(isClose)
+      confirmButton.draw("Confirm", pos.x + 50, pos.y - 22, 100, 40, isPerfect ? 'white' : 'black');
+
+    textSize(20);
+    textStyle(BOLD);
+    textAlign(RIGHT, CENTER);
+    text(perc.toFixed(0)+"%", pos.x + 40, pos.y);
+
+    pop(); // pop settings
 
     if (chatLine) chatLine.draw(50, height - 50, isTraining ? "Stop" : "Send");
   }

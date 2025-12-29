@@ -117,7 +117,6 @@ function parseCommand(command, M) {
     aiTargetMatrix = math.multiply(shearM, aiTargetMatrix);
   }
 
-  // Apply local scaling and rotation
   // Combine to ensure Scale is applied before Rotation to avoid skewing
   let localMatrix = getTransformMatrix(rotation, xScale, yScale, 0, 0);
   aiTargetMatrix = math.multiply(aiTargetMatrix, localMatrix);
