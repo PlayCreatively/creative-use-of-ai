@@ -93,12 +93,8 @@ async function setup() {
   // Initialize audio analyzer with smoothing (0.0 - 0.99)
   amplitude = new p5.Amplitude(0.8);
 
-  for (let i = 0; i < sliderCount; i++) {
-    //random 
-    v = random(-1.0, 1.0);
-    
+  for (let i = 0; i < sliderCount; i++) 
     sliders[i] = new FancySlider(150, 100 + i * 30, 200, i % 2 == 0 ? 0 : PI);
-  }
 
   // resetSliders();
   
@@ -323,7 +319,13 @@ function draw()
     if (chatLine) chatLine.draw(50, height - 50, isTraining ? "Stop" : "Send");
   }
 
-  sliders.forEach(slider => slider.draw());
+  
+
+  sliders.forEach(slider => {
+    slider.updateEnableStates(settingsGUI.legacySettings.map(s => s.value));
+    slider.draw();
+  });
+  
   if(selectedSlider)
     selectedSlider.drawGizmos();
 

@@ -1,5 +1,5 @@
 const MOVE_GIZMO = 2;
-const TOGGLE_GIZMO = 1;
+const TRACKPAD_GIZMO = 1;
 const ROTATE_GIZMO = 0;
 
 class FancySlider {
@@ -11,7 +11,7 @@ class FancySlider {
 
     this.angle = angle;       
     this.v = 0.0;             // -1..1
-    this.enabled = true;      
+    this.trackpadActive = true;      
 
     this.hover = false;
     
@@ -63,7 +63,7 @@ class FancySlider {
     let p = this.localFromScreen(mouseX, mouseY);
     return p.x >= -this.length / 2 &&
            p.x <=  this.length / 2 &&
-           (!this.enabled ? (p.y > 0 && p.y <= this.length) : abs(p.y) <= 10);
+           (!this.trackpadActive ? (p.y > 0 && p.y <= this.length) : abs(p.y) <= 10);
   }
 
   gizmoRect(index) {
@@ -107,7 +107,7 @@ class FancySlider {
   handleMousePressed(isSelected) {
     this.updateHover(isSelected);
     
-    if (!this.hover) return false;
+    if (!this.hover || !this.enabled) return false;
     
     // TRACK DRAG
     if (this.isMouseOverTrack()) {
@@ -116,7 +116,7 @@ class FancySlider {
     }
     
     // ROTATE GIZMO
-    else if (this.isMouseOverGizmo(0)) {
+    else if (this.rotationEnabled && this.isMouseOverGizmo(0)) {
       this.draggingRotate = true;
       
       // Calculate the angle from the center of the slider to the mouse
@@ -130,13 +130,13 @@ class FancySlider {
       this.dragAngleOffset = this.angle - mouseAngle;
     }
 
-    // TOGGLE GIZMO
-    else if (this.isMouseOverGizmo(1)) {
-      this.enabled = !this.enabled;
+    // TRACKPAD GIZMO
+    else if (this.trackpadEnabled && this.isMouseOverGizmo(1)) {
+      this.trackpadActive = !this.trackpadActive;
     }
 
     // MOVE GIZMO
-    else if (this.isMouseOverGizmo(2)) {
+    else if (this.moveEnabled && this.isMouseOverGizmo(2)) {
       this.draggingMove = true;
       this.dragOffsetX = mouseX - this.x;
       this.dragOffsetY = mouseY - this.y;
@@ -146,13 +146,15 @@ class FancySlider {
   }
 
   handleMouseDragged(isSelected) {
+    
+    if(!this.enabled) return false;
+
     if (this.draggingThumb) {
       this.updateValueFromMouse();
       
-    } else if (!isSelected) {
-      return false;
+    } else if (!isSelected) return false;
 
-    } else if (this.draggingRotate) {
+    else if (this.rotationEnabled && this.draggingRotate) {
       // Calculate new mouse angle relative to slider center
       let dx = mouseX - this.x;
       let dy = mouseY - this.y;
@@ -161,7 +163,7 @@ class FancySlider {
       // Apply angle with the initial offset preserved
       this.angle = mouseAngle + this.dragAngleOffset;
       
-    } else if (this.draggingMove) {
+    } else if (this.moveEnabled && this.draggingMove) {
       this.x = mouseX - this.dragOffsetX;
       this.y = mouseY - this.dragOffsetY;
 
@@ -182,7 +184,7 @@ class FancySlider {
     translate(this.x, this.y);
     rotate(this.angle);
 
-    if (!this.enabled) {
+    if (!this.trackpadActive) {
       rectMode(CENTER);
       fill(180, 100);
       noStroke();
@@ -191,7 +193,7 @@ class FancySlider {
 
     // track
     strokeWeight(this.thickness);
-    stroke(this.enabled ? 220 : 120);
+    stroke(this.trackpadActive ? 220 : 120);
     line(-this.length / 2, 0, this.length / 2, 0);
 
     // thumb
@@ -199,27 +201,36 @@ class FancySlider {
     rectMode(CENTER);
     stroke(0, 80);
     strokeWeight(1);
-    let thumbFill = this.enabled ? (this.hover ? 255 : 235) : 160;
+    let thumbFill = this.trackpadActive ? (this.hover ? 255 : 235) : 160;
     fill(thumbFill);
     rect(tx, 0, 16, 26, 4);
 
     pop();
   }
 
+  updateEnableStates(enabled) {
+    [this.enabled, this.moveEnabled, this.rotationEnabled, this.trackpadEnabled] = enabled;
+  }
+
   drawGizmos() {
+    if(!this.enabled) return;
+
     push();
 
     textAlign(CENTER, CENTER);
     textSize(10);
 
     // Rotate gizmo (changed icon to circle arrow to indicate free rotation)
-    this.drawGizmo(ROTATE_GIZMO, "↻"); 
+    if(this.rotationEnabled)
+      this.drawGizmo(ROTATE_GIZMO, "↻"); 
     
     // Move gizmo
-    this.drawGizmo(MOVE_GIZMO, "✥");
+    if(this.moveEnabled)
+      this.drawGizmo(MOVE_GIZMO, "✥");
 
-    // Toggle gizmo
-    this.drawGizmo(TOGGLE_GIZMO, this.enabled ? "●" : "○");
+    // Trackpad gizmo
+    if(this.trackpadEnabled)
+      this.drawGizmo(TRACKPAD_GIZMO, this.trackpadActive ? "●" : "○");
 
     pop();
   }
@@ -243,6 +254,8 @@ class FancySlider {
   }
 
   draw() {
+    if(!this.enabled) return;
+    
     this.updateHover();
     this.drawTrackAndThumb();
   }

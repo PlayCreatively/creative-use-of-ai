@@ -135,3 +135,44 @@ canvas {
   text-decoration: none;
   cursor: pointer;
 }
+
+/* --- Settings Modal Styles --- */
+
+.modal-title {
+  margin-top: 0;
+}
+
+.modal-overlay.open {
+  display: flex;
+  user-select: none;
+}
+
+.settings-header {
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 5px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.settings-checkbox {
+  margin-right: 10px;
+}
+
+.legacy-header {
+  margin-top: 20px;
+}
+
+.warning-box {
+  color: #f9f2f4; /* Bootstrap danger color */
+  font-style: italic;
+  text-align: center;
+  font-size: 0.9em;
+  background-color: #d9534f;
+  padding: 10px;
+  border-radius: 4px;
+  font-weight: 500;
+}

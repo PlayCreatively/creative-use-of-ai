@@ -1,7 +1,26 @@
 class SettingsGUI {
   constructor() {
+    // Initialize settings state here to make them accessible
+    this.generalSettings = [
+        { label: 'Show Notifications', value: true },
+        { label: 'Auto-Save', value: false }
+    ];
+
+    this.legacySettings = [
+        { label: 'Legacy UI', value: false },
+        { label: 'Legacy Move Handle', value: false },
+        { label: 'Legacy Rotation Handle', value: false },
+        { label: 'Legacy Trackpad Gizmo', value: false }
+    ];
+
     this.createOverlay();
     this.createModal();
+  }
+
+  getValue(label) {
+    const allSettings = [...this.generalSettings, ...this.legacySettings];
+    const setting = allSettings.find(s => s.label === label);
+    return setting ? setting.value : false;
   }
 
   createModal() {
@@ -31,7 +50,7 @@ class SettingsGUI {
 
     // Title
     this.modalTitle = createElement('h2', '');
-    this.modalTitle.style('margin-top', '0');
+    this.modalTitle.addClass('modal-title');
     this.modalTitle.parent(modalContent);
 
     // Body Container
@@ -47,11 +66,11 @@ class SettingsGUI {
         contentBuilder(this.modalBody);
     }
     
-    this.modalOverlay.style('display', 'flex');
+    this.modalOverlay.addClass('open');
   }
 
   closeModal() {
-    this.modalOverlay.style('display', 'none');
+    this.modalOverlay.removeClass('open');
   }
 
   createOverlay() {
@@ -88,17 +107,45 @@ class SettingsGUI {
       { 
         label: 'Open Settings', 
         action: () => this.openModal('Settings', (container) => {
-            // Legacy Content
-            let legacyInfo = createP('Legacy: Creative AI Project v1.0');
-            legacyInfo.parent(container);
+            // --- General Settings ---
+            let settingsHeader = createElement('h3', 'General Settings');
+            settingsHeader.parent(container);
+            settingsHeader.addClass('settings-header');
 
-            // Image
-            let img = createImg('images/we can do it [Gemini Generated].jpeg', 'We can do it');
-            img.parent(container);
-            img.style('display', 'block');
-            img.style('width', '50%');
-            img.style('margin', '10px auto');
-            img.style('border-radius', '5px');
+            // Helper function to create toggles
+            const toggleSetting = (settings) => {
+              settings.forEach(setting => {
+                  let row = createDiv('');
+                  row.parent(container);
+                  row.addClass('settings-row');
+
+                  // Checkbox
+                  let chk = createCheckbox('', setting.value);
+                  chk.parent(row);
+                  chk.addClass('settings-checkbox');
+                  
+                  // Update the setting object when changed
+                  chk.changed(() => setting.value = chk.checked());
+                  
+                  // Label
+                  let lbl = createSpan(setting.label);
+                  lbl.parent(row);
+              });
+            }
+
+            toggleSetting(this.generalSettings);
+
+            // --- Legacy Section ---
+            let legacyHeader = createElement('h3', 'Legacy Features');
+            legacyHeader.parent(container);
+            legacyHeader.addClass('settings-header');
+            legacyHeader.addClass('legacy-header');
+            
+            let warning = createP('⚠️ Warning: These features are no longer maintained and may not work as expected.');
+            warning.parent(container);
+            warning.addClass('warning-box');
+            
+            toggleSetting(this.legacySettings);
         }) 
       }
     ]);
