@@ -125,7 +125,16 @@ class SettingsGUI {
                   chk.addClass('settings-checkbox');
                   
                   // Update the setting object when changed
-                  chk.changed(() => setting.value = chk.checked());
+                  chk.changed(() => {
+                    setting.value = chk.checked();
+                    const isAnyLegacy = setting.label === 'Legacy UI' || 
+                                        setting.label === 'Legacy Move Handle' ||
+                                        setting.label === 'Legacy Rotation Handle' ||
+                                        setting.label === 'Legacy Trackpad Gizmo';
+
+                    if(setting.value && isAnyLegacy)
+                      playVoiceLine('warning');
+                  });
                   
                   // Label
                   let lbl = createSpan(setting.label);
@@ -172,11 +181,7 @@ class SettingsGUI {
       let itemBtn = createButton(item.label);
       itemBtn.parent(content);
       itemBtn.mousePressed(() => {
-        // Execute the action
         if (item.action) item.action();
-        
-        // Optional: Close logic is handled by CSS hover, 
-        // but if we wanted click-toggle, we'd do it here.
       });
     });
   }

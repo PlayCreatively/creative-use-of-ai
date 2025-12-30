@@ -153,16 +153,28 @@ async function setup() {
 
 function handleChatCommand(command) {
 
+  const isCommand = command && command.trim().length > 0;
+  aiTargetMatrix = null;
+
+  if(isCommand)
+    aiTargetMatrix = parseCommand(command, M);
+
   if (isTraining)
-  {
+    {
     isTraining = false; // stop training
+
+    if(!aiTargetMatrix)
+      return;
+  }
+  else if(!isCommand)
+    return;
+
+
+  if (!aiTargetMatrix && isCommand)
+  {
+    playVoiceLine("confused");
     return;
   }
-
-  aiTargetMatrix = parseCommand(command, M);
-
-  if (!aiTargetMatrix)
-    return;
 
   playVoiceLine("command");
   

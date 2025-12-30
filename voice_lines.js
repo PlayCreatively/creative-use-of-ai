@@ -1,8 +1,12 @@
 const voiceLines = {};
 
 function preloadVoiceLines() {
-	voiceLines.command = ["great job", "I got you", "I'm here to help you"]
+	voiceLines.command = ["great job", "I got you", "I'm here to help you", "roger that", "consider it done"]
 	.map(line => loadSound(`voice lines/${line}.wav`));
+  voiceLines.warning = ["don't touch that", "too complicated for you"]
+  .map(line => loadSound(`voice lines/${line}.wav`));
+  voiceLines.confused = ["I don't know what that means", "what thoughtful instruction"]
+  .map(line => loadSound(`voice lines/${line}.wav`));
 }
 
 function playVoiceLine(category) {
