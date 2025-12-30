@@ -259,4 +259,29 @@ class FancySlider {
     this.updateHover();
     this.drawTrackAndThumb();
   }
+
+  static saveAll(sliders) {
+    const sliderData = sliders.map(s => ({
+      x: s.x,
+      y: s.y,
+      angle: s.angle,
+      v: s.v,
+      trackpadActive: s.trackpadActive
+    }));
+    localStorage.setItem('sliderData', JSON.stringify(sliderData));
+  }
+
+  static loadAll(sliders) {
+    const data = localStorage.getItem('sliderData');
+    if (data) {
+      const sliderData = JSON.parse(data);
+      for (let i = 0; i < min(sliders.length, sliderData.length); i++) {
+        sliders[i].x = sliderData[i].x;
+        sliders[i].y = sliderData[i].y;
+        sliders[i].angle = sliderData[i].angle;
+        sliders[i].v = sliderData[i].v;
+        sliders[i].trackpadActive = sliderData[i].trackpadActive;
+      }
+    }
+  }
 }

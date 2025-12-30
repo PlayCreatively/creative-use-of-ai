@@ -53,7 +53,14 @@ function mousePressed(e) {
   const lastSelectedSlider = selectedSlider;
   selectedSlider = null;
 
-  sliders.forEach(slider => { if (slider.handleMousePressed(slider === lastSelectedSlider)) selectedSlider = slider; });
+  let changed = false;
+  sliders.forEach(slider => { 
+    if (slider.handleMousePressed(slider === lastSelectedSlider)) {
+      selectedSlider = slider;
+      changed = true;
+    }
+  });
+  if (changed) FancySlider.saveAll(sliders);
   
   if (chatLine) chatLine.mousePressed();
 
@@ -76,7 +83,14 @@ function mousePressed(e) {
 }
 
 function mouseDragged() {
-  sliders.forEach(slider => { if (slider.handleMouseDragged(slider === selectedSlider)) selectedSlider = slider; });
+  let changed = false;
+  sliders.forEach(slider => { 
+    if (slider.handleMouseDragged(slider === selectedSlider)) {
+      selectedSlider = slider;
+      changed = true;
+    }
+  });
+  if (changed) FancySlider.saveAll(sliders);
 }
 
 function mouseReleased() {
@@ -85,6 +99,7 @@ function mouseReleased() {
 
 function resetSliders() {
   sliders.forEach(slider => slider.value(random(-1.0, 1.0)));
+  FancySlider.saveAll(sliders);
 }
 
 async function setup() {
@@ -95,6 +110,8 @@ async function setup() {
 
   for (let i = 0; i < sliderCount; i++) 
     sliders[i] = new FancySlider(150, 100 + i * 30, 200, i % 2 == 0 ? 0 : PI);
+
+  FancySlider.loadAll(sliders);
 
   // resetSliders();
   
