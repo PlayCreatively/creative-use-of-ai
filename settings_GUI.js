@@ -84,22 +84,17 @@ class SettingsGUI {
     // --- Example Menu Items ---
     
     // File Menu
-    this.createDropdown('File', [
+    this.createDropdown('File - IMPLEMENT', [
       { label: 'New Project', action: () => console.log('New Project') },
       { label: 'Save', action: () => console.log('Save') },
       { label: 'Load', action: () => console.log('Load') }
     ]);
 
     // Edit Menu
-    this.createDropdown('Edit', [
+    this.createDropdown('Edit - IMPLEMENT', [
       { label: 'Undo', action: () => console.log('Undo') },
       { label: 'Redo', action: () => console.log('Redo') },
       { label: 'Clear Canvas', action: () => console.log('Clear Canvas') }
-    ]);
-    
-    // Help Menu
-    this.createDropdown('Help', [
-      { label: 'About', action: () => alert('Creative AI Project v1.0') }
     ]);
     
     // Settings Menu
@@ -157,6 +152,44 @@ class SettingsGUI {
             toggleSetting(this.legacySettings);
         }) 
       }
+    ]);
+    
+    // Help Menu
+    this.createDropdown('Help', [
+      { label: 'How To', action: () => {
+        this.openModal('Command Cheat Sheet', (container) => {
+          // Create a grid layout to use horizontal space
+          let grid = createDiv('').parent(container);
+          grid.addClass('cheat-sheet-grid');
+
+          const addSection = (title, content) => {
+            let section = createDiv('').parent(grid);
+            createElement('h3', title).parent(section).addClass('cheat-sheet-title');
+            createDiv(content).parent(section).addClass('cheat-sheet-content');
+          };
+
+          addSection('1. Actions <div class="mirrored-symbol">🗨</div>', 
+            '<div class="actions-grid">' +
+            '<div class="text-right">move</div><div class="symbol">✥</div><div class="text-right">rotate</div><div class="symbol">↻</div><div class="text-right">scale</div><div class="symbol">⤢</div>' +
+            '<div class="text-right">stretch</div><div class="symbol">↔</div><div class="text-right">squash</div><div class="symbol">⇥⇤</div><div class="text-right">flip</div><div class="symbol">⇄</div>' +
+            '<div class="text-right">shear</div><div class="symbol">▱</div>' +
+            '</div>');
+
+          addSection('2. Axis Transformations <div class="mirrored-symbol">🗨</div>', 
+            '<div class="axis-grid">' +
+            '<div class="text-right">x</div><div class="symbol">↔</div><div class="text-right">y</div><div class="symbol">↕</div>' +
+            '<div class="text-right">left</div><div class="symbol">←</div><div class="text-right">right</div><div class="symbol">→</div>' +
+            '<div class="text-right">up</div><div class="symbol">↑</div><div class="text-right">down</div><div class="symbol">↓</div>' +
+            '</div>');
+
+          addSection('3. Intensity <div class="mirrored-symbol">🗨</div>', 
+            '<div class="intensity-grid">' +
+            '<div class="symbol">▲</div><div><b>Increase:</b></div><div>lot, very, extremely, much</div>' +
+            '<div class="symbol">▼</div><div><b>Decrease:</b></div><div>little, slightly, bit, less</div>' +
+            '</div>');
+        });
+      }},
+      { label: 'About', action: () => alert('Creative AI Project v1.0') }
     ]);
   }
 

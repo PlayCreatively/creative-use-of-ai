@@ -176,3 +176,62 @@ canvas {
   border-radius: 4px;
   font-weight: 500;
 }
+
+/* --- Cheat Sheet Styles --- */
+.cheat-sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  text-align: left;
+}
+
+.cheat-sheet-title {
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: #f16439;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
+}
+
+.cheat-sheet-content {
+  line-height: 1.5;
+  font-size: 20px;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: max-content 25px max-content 25px max-content 25px;
+  gap: 5px 10px;
+  align-items: center;
+  margin: 30px auto;
+  margin-bottom: 0;
+  width: fit-content;
+  font-family: monospace;
+}
+
+.axis-grid {
+  display: grid;
+  grid-template-columns: max-content 25px max-content 25px;
+  gap: 5px 10px;
+  align-items: center;
+  margin: 30px auto;
+  margin-bottom: 0;
+  width: fit-content;
+  font-family: monospace;
+}
+
+.intensity-grid {
+  display: grid;
+  grid-template-columns: 20px auto 1fr;
+  gap: 5px;
+  align-items: center;
+}
+
+.text-right { text-align: right; }
+.symbol { text-align: center; color: #f16439; }
+
+
+.mirrored-symbol {
+  display: inline-block;
+  transform: scaleX(-1);
+}

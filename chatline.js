@@ -5,6 +5,7 @@ class ChatLine {
     this.onSend = onSend;
     
     this.input = createInput('');
+    this.input.attribute('placeholder', 'Type transformation command...');
     this.input.size(w - 80, h); 
     this.input.style('font-size', '16px');
     this.input.style('border-radius', '8px');

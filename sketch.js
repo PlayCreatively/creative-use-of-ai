@@ -204,7 +204,7 @@ function* transformRoutine() {
   regressor.setRestingOutputFromSliders(sliders.map(s => s.value()));
   
   const minLoss = 0.05;
-  const maxIterations = 300;
+  const maxIterations = 200;
   const movingAvgWindow = 30;
   let iterations = 0;
   let lastLoss = 0;
