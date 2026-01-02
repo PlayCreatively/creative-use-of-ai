@@ -55,7 +55,9 @@ class CutoutLibrary {
         funcDrawn = true;
       }
 
+      tint(150);
       cutout.drawAtTarget();
+      tint(255);
     }
 
     if(!funcDrawn)
@@ -74,15 +76,35 @@ class Cutout {
     this.targetMatrix = math.matrix(data.targetMatrix);
 
     // Load the image
-    this.img = loadImage("../images/" + this.imageName);
+    this.img = loadImage("../images/" + this.imageName, (loadedImg) => {
+      this.silhouetteImg = loadedImg.get();
+      this.silhouetteImg.loadPixels();
+      for (let i = 0; i < this.silhouetteImg.pixels.length; i += 4) {
+        this.silhouetteImg.pixels[i] = 255;     // R
+        this.silhouetteImg.pixels[i + 1] = 255; // G
+        this.silhouetteImg.pixels[i + 2] = 255; // B
+        // Alpha (i+3) remains unchanged
+      }
+      this.silhouetteImg.updatePixels();
+    });
+  }
+
+  drawOutline(matrix, weight = 2) {
+    const steps = 8;
+    for (let i = 0; i < steps; i++) {
+      const angle = (TWO_PI * i) / steps;
+      const x = cos(angle) * weight;
+      const y = sin(angle) * weight;
+      this.drawAt(matrix, x, y, true);
+    }
   }
 
   // Draws the image as a silhouette at the target matrix.
   // Checks if inputMatrix is close to targetMatrix.
   // Returns true if close, false otherwise.
-  drawTarget(inputMatrix) {
-    tint(0, 150);
-    this.drawAtTarget();
+  drawTarget(inputMatrix, r = 0, g = 0, b = 0) {
+    tint(r, g, b, 255);
+    this.drawOutline(this.targetMatrix, 2);
     tint(255);
 
     // draw actual image //
@@ -92,9 +114,7 @@ class Cutout {
   }
 
   // Draws the image using a given position matrix
-  drawAt(positionMatrix) {
-
-    let copyMatrix = positionMatrix.clone();
+  drawAt(positionMatrix, x = 0, y = 0, useSilhouette = false) {
 
     push();
 
@@ -103,18 +123,26 @@ class Cutout {
     const cw = width / 2;
     const ch = height / 2;
     
-    // center in canvas and scale position matrix to canvas coords
-    copyMatrix.set([0,2], (copyMatrix.get([0,2]) * ch + cw));
-    copyMatrix.set([1,2], (copyMatrix.get([1,2]) * ch + ch));
+    translate(cw + positionMatrix.get([0,2]) * ch, ch + positionMatrix.get([1,2]) * ch);
     
-    // Apply the given position matrix
-    this.applyMathMatrix(copyMatrix);
+    // Apply rotation/scale/shear
+    const a = positionMatrix.get([0, 0]);
+    const c = positionMatrix.get([0, 1]);
+    const b = positionMatrix.get([1, 0]);
+    const d = positionMatrix.get([1, 1]);
+    applyMatrix(a, b, c, d, 0, 0);
     
     // Apply scale factor
     scale(this.scaleFactor);
     
     // Draw the image centered
-    image(this.img, -this.img.width / 2, -this.img.height / 2);
+    imageMode(CENTER);
+    
+    if (useSilhouette && this.silhouetteImg) {
+      image(this.silhouetteImg, x, y);
+    } else {
+      image(this.img, x, y);
+    }
     
     pop();
 

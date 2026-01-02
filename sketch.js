@@ -17,6 +17,8 @@ let lastPred = [];
 let aiCoroutine = null;
 
 let aiTargetMatrix = math.identity(3);
+let outlineColor = [255, 220, 0]; // RGB color for the target outline
+
 
 let currentCutoutIndex = 0;
 let library;
@@ -312,7 +314,7 @@ function draw()
   library.drawAllBefore(currentCutoutIndex, (cutout) => {
     
     // Draw the target silhouette and check against current matrix M
-    let diffSum = cutout.drawTarget(M);
+    let diffSum = cutout.drawTarget(M, ...outlineColor);
     
     // Calculate button position
     const s = cutout.scaleFactor;
