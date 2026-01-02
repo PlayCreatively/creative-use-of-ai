@@ -17,7 +17,6 @@ let lastPred = [];
 let aiCoroutine = null;
 
 let aiTargetMatrix = math.identity(3);
-let outlineColor = [255, 220, 0]; // RGB color for the target outline
 
 
 let currentCutoutIndex = 0;
@@ -311,52 +310,47 @@ function draw()
   } 
   else if (M) aiTargetMatrix = M.clone();
 
-  library.drawAllBefore(currentCutoutIndex, (cutout) => {
-    
-    // Draw the target silhouette and check against current matrix M
-    let diffSum = cutout.drawTarget(M, ...outlineColor);
-    
-    // Calculate button position
-    const s = cutout.scaleFactor;
-    const localX = (cutout.img.width / 2) * s * 0.75;
-    const localY = (cutout.img.height / 2) * s * 0.75;
+  let diffSum = library.drawAllBeforeAndTarget(currentCutoutIndex, M);
+  
+  // Calculate button position
+  const cutout = library.get(currentCutoutIndex);
+  const s = cutout.scaleFactor;
+  const localX = (cutout.img.width / 2) * s * 0.75;
+  const localY = (cutout.img.height / 2) * s * 0.75;
 
-    let MClone = math.clone(M);
+  let MClone = math.clone(M);
 
-    const canvasSize = {width: width, height: height};
-    const cw = canvasSize.width / 2;
-    const ch = canvasSize.height / 2;
+  const canvasSize = {width: width, height: height};
+  const cw = canvasSize.width / 2;
+  const ch = canvasSize.height / 2;
 
-    // center in canvas and scale position matrix to canvas height coords
-    MClone.set([0,2], (MClone.get([0,2]) * ch + cw));
-    MClone.set([1,2], (MClone.get([1,2]) * ch + ch));
+  // center in canvas and scale position matrix to canvas height coords
+  MClone.set([0,2], (MClone.get([0,2]) * ch + cw));
+  MClone.set([1,2], (MClone.get([1,2]) * ch + ch));
 
-    const pos = transformPoint(MClone, localX, localY);
+  const pos = transformPoint(MClone, localX, localY);
 
-    // Draw closeness percentage
-    const maxDiff = 2;
-    diffSum = math.max(0, diffSum - .08); // allow some leeway
-    const perc = (Math.max(0, 1 - diffSum / maxDiff)) * 100;
-    const isPerfect = perc >= 99.5;
-
-    push(); // push settings
-
-    fill(isPerfect ? 255 : 0);
-
+  // Draw closeness percentage
+  const maxDiff = 2;
+  diffSum = math.max(0, diffSum - .08); // allow some leeway
+  const perc = (Math.max(0, 1 - diffSum / maxDiff)) * 100;
+  const isPerfect = perc >= 99.5;
+  
     // Draw confirm button
     if(isPerfect)
-      confirmButton.draw("Confirm", pos.x + 50, pos.y - 22, 100, 40, isPerfect ? 'white' : 'black');
+      confirmButton.draw("Confirm", pos.x + 50, pos.y - 22, 100, 40, 'white');
 
-    textSize(20);
-    textStyle(BOLD);
-    textAlign(RIGHT, CENTER);
-    text(perc.toFixed(0)+"%", pos.x + 40, pos.y);
+  push(); // push settings
 
-    pop(); // pop settings
+  fill(isPerfect ? 255 : 0);
+  textSize(20);
+  textStyle(BOLD);
+  textAlign(RIGHT, CENTER);
+  text(perc.toFixed(0)+"%", pos.x + 40, pos.y);
 
-    if (chatLine) chatLine.draw(50, height - 50, isTraining ? "Stop" : "Send");
+  pop(); // pop settings
 
-  });
+  if (chatLine) chatLine.draw(50, height - 50, isTraining ? "Stop" : "Send");
 
   sliders.forEach(slider => {
     slider.updateEnableStates(settingsGUI.legacySettings.map(s => s.value));

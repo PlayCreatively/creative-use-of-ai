@@ -36,22 +36,23 @@ class CutoutLibrary {
     return this.cutouts.length;
   }
 
-  drawAllBefore(index, drawFunc)
+  drawAllBeforeAndTarget(index, inputMatrix)
   {
     let drawList = this.cutouts.slice(0, index)
       .concat(this.background);
     
-    const indexCutoutOrder = this.cutouts[index].order;
+    const targetCutout = this.cutouts[index];
     let funcDrawn = false;
+    let loss = 0;
     
     // Sort by order
     drawList.sort((a, b) => a.order - b.order);
 
     for(let cutout of drawList)
     {
-      if(!funcDrawn && indexCutoutOrder <= cutout.order)
+      if(!funcDrawn && targetCutout.order <= cutout.order)
       {
-        drawFunc(this.cutouts[index]);
+        loss = targetCutout.drawTarget(inputMatrix);
         funcDrawn = true;
       }
 
@@ -61,7 +62,9 @@ class CutoutLibrary {
     }
 
     if(!funcDrawn)
-      drawFunc(this.cutouts[index]);
+      loss = targetCutout.drawTarget(inputMatrix);
+
+    return loss;
   }
 }
 
@@ -102,8 +105,8 @@ class Cutout {
   // Draws the image as a silhouette at the target matrix.
   // Checks if inputMatrix is close to targetMatrix.
   // Returns true if close, false otherwise.
-  drawTarget(inputMatrix, r = 0, g = 0, b = 0) {
-    tint(r, g, b, 255);
+  drawTarget(inputMatrix) {
+    tint(255, 220, 0, 255);
     this.drawOutline(this.targetMatrix, 2);
     tint(255);
 
