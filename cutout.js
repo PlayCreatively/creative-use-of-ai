@@ -1,11 +1,24 @@
 class CutoutLibrary {
   constructor(jsonPath) {
     this.cutouts = [];
+    this.background = [];
     // Load the JSON file
     loadJSON(jsonPath, (data) => {
       // Iterate over the array in the JSON
-      for (let item of data) {
-        this.cutouts.push(new Cutout(item));
+      let order = 0;
+      for (let cutout of data.background) {
+        if(cutout.order === undefined) {
+          cutout.order = order;
+          order++;
+        }
+        this.background.push(new Cutout(cutout));
+      }
+      for (let cutout of data.cutouts) {
+        if(cutout.order === undefined) {
+          cutout.order = order;
+          order++;
+        }
+        this.cutouts.push(new Cutout(cutout));
       }
     });
   }
@@ -22,19 +35,46 @@ class CutoutLibrary {
   count() {
     return this.cutouts.length;
   }
+
+  drawAllBefore(index, drawFunc)
+  {
+    let drawList = this.cutouts.slice(0, index)
+      .concat(this.background);
+    
+    const indexCutoutOrder = this.cutouts[index].order;
+    let funcDrawn = false;
+    
+    // Sort by order
+    drawList.sort((a, b) => a.order - b.order);
+
+    for(let cutout of drawList)
+    {
+      if(!funcDrawn && indexCutoutOrder <= cutout.order)
+      {
+        drawFunc(this.cutouts[index]);
+        funcDrawn = true;
+      }
+
+      cutout.drawAtTarget();
+    }
+
+    if(!funcDrawn)
+      drawFunc(this.cutouts[index]);
+  }
 }
 
 class Cutout {
   constructor(data) {
     this.imageName = data.imageName;
     this.scaleFactor = data.scale || 1.0;
+    this.order = data.order;
     
     // Parse the target matrix from the JSON array
     // Assuming data.targetMatrix is a 3x3 array of numbers
     this.targetMatrix = math.matrix(data.targetMatrix);
 
     // Load the image
-    this.img = loadImage(this.imageName);
+    this.img = loadImage("../images/" + this.imageName);
   }
 
   // Draws the image as a silhouette at the target matrix.

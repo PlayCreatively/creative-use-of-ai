@@ -1,44 +1,44 @@
-[
-	{
-		"imageName": "sprite.png",
-		"scale": 0.2,
+{
+	"background": [{
+		"imageName": "letter background.png",
+		"order": -100,
+		"scale": 1,
 		"targetMatrix": [
-			[
-				1,
-				0,
-				-0.025
-			],
-			[
-				0,
-				1,
-				-0.025
-			],
-			[
-				0,
-				0,
-				1
-			]
+			[1,0,0],
+			[0,1,0],
+			[0,0,1]
 		]
 	},
 	{
-		"imageName": "sprite.png",
-		"scale": 0.2,
+		"imageName": "apology letter.png",
+		"order": -1,
+		"scale": 1,
 		"targetMatrix": [
-			[
-				0.5,
-				-0.866,
-				0.25
-			],
-			[
-				0.866,
-				0.5,
-				0.25
-			],
-			[
-				0,
-				0,
-				1
-			]
+			[1,0,0],
+			[0,1,0],
+			[0,0,1]
+		]
+	}],
+	"cutouts": [
+	{
+		"imageName": "suggestion.png",
+		"order": -99,
+		"scale": 1,
+		"targetMatrix": [
+			[1,0,-0.057],
+			[0,1,0],
+			[0,0,1]
+		]
+	},
+	{
+		"imageName": "authenticity.png",
+		"order": 2,
+		"scale": 1,
+		"targetMatrix": [
+			[1,0,0.35],
+			[0,1,-0.06],
+			[0,0,1]
 		]
 	}
 ]
+}

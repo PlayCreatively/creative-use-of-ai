@@ -77,9 +77,18 @@ function mousePressed(e) {
     currentCutoutIndex++;
     resetSliders();
     if (currentCutoutIndex >= library.count()) {
+      alert("You've reached the end of the cutouts. Restarting from the beginning.");
       currentCutoutIndex = 0; 
     }
   }
+}
+
+function SkipCutout(){
+    currentCutoutIndex++;
+    if (currentCutoutIndex >= library.count()) {
+      alert("You've reached the end of the cutouts. Restarting from the beginning.");
+      currentCutoutIndex = 0; 
+    }
 }
 
 function mouseDragged() {
@@ -95,6 +104,15 @@ function mouseDragged() {
 
 function mouseReleased() {
   sliders.forEach(slider => slider.handleMouseReleased());
+}
+
+function keyPressed() {
+  if (key === 'n' || key === 'N') {
+    SkipCutout();
+  }
+  if (key === 'i' || key === 'I') {
+    alert("Current Matrix:\n" + matrixToString(M));
+  }
 }
 
 function resetSliders() {
@@ -283,7 +301,6 @@ function draw()
   textSize(13);
   fill(0);
 
-
   updateMatrix();
 
   if (aiCoroutine) {
@@ -292,17 +309,7 @@ function draw()
   } 
   else if (M) aiTargetMatrix = M.clone();
 
-
-  for(let i = 0; i < currentCutoutIndex; i++)
-  {
-    let cutout = library.get(i);
-    if (cutout)
-      cutout.drawAtTarget();
-  }
-
-  const cutout = library.get(currentCutoutIndex);
-  
-  if (cutout) {
+  library.drawAllBefore(currentCutoutIndex, (cutout) => {
     
     // Draw the target silhouette and check against current matrix M
     let diffSum = cutout.drawTarget(M);
@@ -326,7 +333,7 @@ function draw()
 
     // Draw closeness percentage
     const maxDiff = 2;
-    diffSum = math.max(0, diffSum - .05); // allow some leeway
+    diffSum = math.max(0, diffSum - .08); // allow some leeway
     const perc = (Math.max(0, 1 - diffSum / maxDiff)) * 100;
     const isPerfect = perc >= 99.5;
 
@@ -346,9 +353,8 @@ function draw()
     pop(); // pop settings
 
     if (chatLine) chatLine.draw(50, height - 50, isTraining ? "Stop" : "Send");
-  }
 
-  
+  });
 
   sliders.forEach(slider => {
     slider.updateEnableStates(settingsGUI.legacySettings.map(s => s.value));

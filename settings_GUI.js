@@ -145,7 +145,7 @@ class SettingsGUI {
             legacyHeader.addClass('settings-header');
             legacyHeader.addClass('legacy-header');
             
-            let warning = createP('⚠️ Warning: These features are no longer maintained and may not work as expected.');
+            let warning = createP('⚠️ Warning: These features are not meant for the general public and are no longer maintained. <br/>Use at your own risk.');
             warning.parent(container);
             warning.addClass('warning-box');
             
