@@ -1,26 +1,43 @@
+class CutoutLibraries {
+  constructor (jsonPath) 
+  {
+    this.libraries = [];
+    loadJSON(jsonPath, (data) => {
+      for(const libData of data)
+        this.libraries.push(new CutoutLibrary(libData));
+    });
+  }
+  
+  // Get a specific library by index
+  get(index) {
+    if (index >= 0 && index < this.libraries.length) {
+      return this.libraries[index];
+    }
+    return null;
+  }
+  
+  // Get the number of libraries
+  count() {
+    return this.libraries.length;
+  }
+}
+
 class CutoutLibrary {
-  constructor(jsonPath) {
+  constructor(libData) {
     this.cutouts = [];
     this.background = [];
-    // Load the JSON file
-    loadJSON(jsonPath, (data) => {
-      // Iterate over the array in the JSON
-      let order = 0;
-      for (let cutout of data.background) {
-        if(cutout.order === undefined) {
-          cutout.order = order;
-          order++;
-        }
+    // Iterate over the array
+    let order = 0;
+
+    if(libData.background)
+      for (let cutout of libData.background) {
+        cutout.order = cutout.order ?? order++;
         this.background.push(new Cutout(cutout));
       }
-      for (let cutout of data.cutouts) {
-        if(cutout.order === undefined) {
-          cutout.order = order;
-          order++;
-        }
-        this.cutouts.push(new Cutout(cutout));
-      }
-    });
+    for (let cutout of libData.cutouts) {
+      cutout.order = cutout.order ?? order++;
+      this.cutouts.push(new Cutout(cutout));
+    }
   }
 
   // Get a specific cutout by index
@@ -38,8 +55,11 @@ class CutoutLibrary {
 
   drawAllBeforeAndTarget(index, inputMatrix)
   {
-    let drawList = this.cutouts.slice(0, index)
-      .concat(this.background);
+    let drawList = this.cutouts.slice(0, index);
+
+    if(this.background)
+      drawList = this.background.concat(drawList);
+      
     
     const targetCutout = this.cutouts[index];
     let funcDrawn = false;
@@ -62,9 +82,23 @@ class CutoutLibrary {
     }
 
     if(!funcDrawn)
-      loss = targetCutout.drawTarget(inputMatrix);
+    loss = targetCutout.drawTarget(inputMatrix);
 
     return loss;
+  }
+
+  drawAll()
+  {
+    let drawList = this.cutouts;
+
+    if(this.background)
+      drawList = this.background.concat(drawList);
+    
+    // Sort by order
+    drawList.sort((a, b) => a.order - b.order);
+
+    for(let cutout of drawList)
+      cutout.drawAtTarget();
   }
 }
 
@@ -73,6 +107,7 @@ class Cutout {
     this.imageName = data.imageName;
     this.scaleFactor = data.scale || 1.0;
     this.order = data.order;
+    this.cropout = data.cropout;
     
     // Parse the target matrix from the JSON array
     // Assuming data.targetMatrix is a 3x3 array of numbers
@@ -136,16 +171,16 @@ class Cutout {
     applyMatrix(a, b, c, d, 0, 0);
     
     // Apply scale factor
-    scale(this.scaleFactor);
+    scale(this.scaleFactor * (height / windowed.height));
     
     // Draw the image centered
     imageMode(CENTER);
     
-    if (useSilhouette && this.silhouetteImg) {
-      image(this.silhouetteImg, x, y);
-    } else {
-      image(this.img, x, y);
-    }
+    const img = useSilhouette && this.silhouetteImg ? this.silhouetteImg : this.img;
+    if(this.cropout)
+      drawImageTile(img, x, y, this.cropout.c, this.cropout.r, this.cropout.i);
+    else
+      image(img, x, y);
     
     pop();
 

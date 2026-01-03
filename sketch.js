@@ -1,3 +1,5 @@
+const DEBUG = true;
+
 const sliderCount = 5;
 let sliders = [];
 let selectedSlider = null;
@@ -20,7 +22,9 @@ let aiTargetMatrix = math.identity(3);
 
 
 let currentCutoutIndex = 0;
-let library;
+let curLibraryIndex = 0;
+let curLibrary;
+let libraries;
 const confirmButton = new SimpleButton();
 const fullscreenButton = new SimpleButton();
 let AI_mascotIMG;
@@ -30,7 +34,8 @@ let isTraining = false;
 let amplitude;
 
 function preload() {
-  library = new CutoutLibrary("cutouts.json");
+  libraries = new CutoutLibraries("cutouts.json");
+
   AI_mascotIMG = loadImage('images/ai mascot [Gemini Generated].png');
 
   preloadVoiceLines();
@@ -73,23 +78,15 @@ function mousePressed(e) {
   if (confirmButton.isHovering(mouseX, mouseY)) {
 
     // Save current matrix as target for current cutout
-    library.get(currentCutoutIndex).targetMatrix = M.clone();
+    curLibrary.get(currentCutoutIndex).targetMatrix = M.clone();
 
     currentCutoutIndex++;
     resetSliders();
-    if (currentCutoutIndex >= library.count()) {
-      alert("You've reached the end of the cutouts. Restarting from the beginning.");
-      currentCutoutIndex = 0; 
-    }
   }
 }
 
 function SkipCutout(){
     currentCutoutIndex++;
-    if (currentCutoutIndex >= library.count()) {
-      alert("You've reached the end of the cutouts. Restarting from the beginning.");
-      currentCutoutIndex = 0; 
-    }
 }
 
 function mouseDragged() {
@@ -108,11 +105,14 @@ function mouseReleased() {
 }
 
 function keyPressed() {
-  if (key === 'n' || key === 'N') {
+
+
+  if(DEBUG){
+    if (key === 'n' || key === 'N')
     SkipCutout();
-  }
-  if (key === 'i' || key === 'I') {
-    alert("Current Matrix:\n" + matrixToString(M));
+  
+    if (key === 'i' || key === 'I')
+      alert("Current Matrix:\n" + matrixToString(M));
   }
 }
 
@@ -123,6 +123,8 @@ function resetSliders() {
 
 async function setup() {
   createCanvas(width, height);
+
+  curLibrary = libraries.get(curLibraryIndex);
 
   // Initialize audio analyzer with smoothing (0.0 - 0.99)
   amplitude = new p5.Amplitude(0.8);
@@ -160,7 +162,8 @@ async function setup() {
       return loss; 
     }
   });
-  
+
+  if(!DEBUG)
   settingsGUI.openModal('New Update!', (container) => {
     
     createP("Introducing v8.0 🥳🥂🍾</br></br>").parent(container);
@@ -301,19 +304,39 @@ function draw()
   // reset font size
   textSize(13);
   fill(0);
+  
+  const finishedAllCutouts = currentCutoutIndex >= curLibrary.count();
 
+  if (finishedAllCutouts) {
+    curLibrary.drawAll();
+
+    let button = new SimpleButton();
+    button.draw("Upload", width / 2 - 50, height - 150, 100, 40, 'white');
+    if (button.isHovering(mouseX, mouseY) && mouseIsPressed) {
+      curLibraryIndex++;
+      if (curLibraryIndex >= libraries.count())
+        curLibraryIndex = 0;
+      curLibrary = libraries.get(curLibraryIndex);
+      currentCutoutIndex = 0;
+      resetSliders();
+    }
+
+    return;
+  }
+  
   updateMatrix();
-
+  
   if (aiCoroutine) {
     if (aiCoroutine.next().done) 
       aiCoroutine = null;
   } 
   else if (M) aiTargetMatrix = M.clone();
-
-  let diffSum = library.drawAllBeforeAndTarget(currentCutoutIndex, M);
+  
+  let diffSum = curLibrary.drawAllBeforeAndTarget(currentCutoutIndex, M);
+  
   
   // Calculate button position
-  const cutout = library.get(currentCutoutIndex);
+  const cutout = curLibrary.get(currentCutoutIndex);
   const s = cutout.scaleFactor;
   const localX = (cutout.img.width / 2) * s * 0.75;
   const localY = (cutout.img.height / 2) * s * 0.75;
@@ -328,6 +351,13 @@ function draw()
   MClone.set([0,2], (MClone.get([0,2]) * ch + cw));
   MClone.set([1,2], (MClone.get([1,2]) * ch + ch));
 
+  const scaleRatio = height / windowed.height;
+
+  MClone.set([0,0], MClone.get([0,0]) * scaleRatio);
+  MClone.set([0,1], MClone.get([0,1]) * scaleRatio);
+  MClone.set([1,0], MClone.get([1,0]) * scaleRatio);
+  MClone.set([1,1], MClone.get([1,1]) * scaleRatio);
+
   const pos = transformPoint(MClone, localX, localY);
 
   // Draw closeness percentage
@@ -336,9 +366,9 @@ function draw()
   const perc = (Math.max(0, 1 - diffSum / maxDiff)) * 100;
   const isPerfect = perc >= 99.5;
   
-    // Draw confirm button
-    if(isPerfect)
-      confirmButton.draw("Confirm", pos.x + 50, pos.y - 22, 100, 40, 'white');
+  // Draw confirm button
+  if(isPerfect)
+    confirmButton.draw("Confirm", pos.x + 50, pos.y - 22, 100, 40, 'white');
 
   push(); // push settings
 

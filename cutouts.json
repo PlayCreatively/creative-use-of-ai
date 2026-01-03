@@ -1,44 +1,131 @@
-{
-	"background": [{
-		"imageName": "letter background.png",
-		"order": -100,
-		"scale": 1,
-		"targetMatrix": [
-			[1,0,0],
-			[0,1,0],
-			[0,0,1]
-		]
-	},
+[
 	{
-		"imageName": "apology letter.png",
-		"order": -1,
-		"scale": 1,
-		"targetMatrix": [
-			[1,0,0],
-			[0,1,0],
-			[0,0,1]
-		]
-	}],
 	"cutouts": [
 	{
-		"imageName": "suggestion.png",
-		"order": -99,
+		"imageName": "AI pioneers [ChatGPT Generation].jpg",
+		"cropout": {
+			"c": 3,
+			"r": 2,
+			"i": 0
+		},
 		"scale": 1,
 		"targetMatrix": [
-			[1,0,-0.057],
-			[0,1,0],
+			[1.1,0,-0.5],
+			[0,1.1,-0.35],
 			[0,0,1]
 		]
-	},
-	{
-		"imageName": "authenticity.png",
-		"order": 2,
+	},{
+		"imageName": "AI pioneers [ChatGPT Generation].jpg",
+		"cropout": {
+			"c": 3,
+			"r": 2,
+			"i": 1
+		},
 		"scale": 1,
 		"targetMatrix": [
-			[1,0,0.35],
-			[0,1,-0.06],
+			[1.1,0,0],
+			[0,1.1,-0.35],
+			[0,0,1]
+		]
+	},{
+		"imageName": "AI pioneers [ChatGPT Generation].jpg",
+		"cropout": {
+			"c": 3,
+			"r": 2,
+			"i": 2
+		},
+		"scale": 1,
+		"targetMatrix": [
+			[1.1,0,0.5],
+			[0,1.1,-0.35],
+			[0,0,1]
+		]
+	},{
+		"imageName": "AI pioneers [ChatGPT Generation].jpg",
+		"cropout": {
+			"c": 3,
+			"r": 2,
+			"i": 3
+		},
+		"scale": 1,
+		"targetMatrix": [
+			[1.1,0,-0.5],
+			[0,1.1, 0.175],
+			[0,0,1]
+		]
+	},{
+		"imageName": "AI pioneers [ChatGPT Generation].jpg",
+		"cropout": {
+			"c": 3,
+			"r": 2,
+			"i": 4
+		},
+		"scale": 1,
+		"targetMatrix": [
+			[1.1,0,0],
+			[0,1.1, 0.175],
+			[0,0,1]
+		]
+	},{
+		"imageName": "AI pioneers [ChatGPT Generation].jpg",
+		"cropout": {
+			"c": 3,
+			"r": 2,
+			"i": 5
+		},
+		"scale": 1,
+		"targetMatrix": [
+			[1.1,0,0.5],
+			[0,1.1, 0.175],
 			[0,0,1]
 		]
 	}
 ]
+},
+	
+{
+"background": [{
+	"imageName": "letter background.png",
+	"order": -100,
+	"scale": 1,
+	"targetMatrix": [
+		[1,0,0],
+		[0,1,0],
+		[0,0,1]
+	]
+},
+{
+	"imageName": "apology letter.png",
+	"order": -1,
+	"scale": 1,
+	"targetMatrix": [
+		[1,0,0],
+		[0,1,0],
+		[0,0,1]
+	]
+}],
+"cutouts": [
+{
+	"imageName": "suggestion.png",
+	"order": -99,
+	"scale": 1,
+	"targetMatrix": [
+		[1,0,-0.057],
+		[0,1,0],
+		[0,0,1]
+	]
+},
+{
+	"imageName": "authenticity.png",
+	"order": 2,
+	"scale": 1,
+	"targetMatrix": [
+		[1,0,0.35],
+		[0,1,-0.06],
+		[0,0,1]
+	]
 }
+]
+}
+
+]

@@ -232,3 +232,22 @@ function matrixFromSliders(sliderValues) {
 function stringContainsAny(mainStr, subStrings) {
   return subStrings.some(subStr => mainStr.indexOf(subStr) !== -1);
 }
+
+function drawImageTile(img, x, y, cols, rows, index) {
+  // Calculate width and height of a single tile
+  const tileW = img.width / cols;
+  const tileH = img.height / rows;
+
+  // Calculate grid coordinates (col, row) from the linear index
+  const c = index % cols;
+  const r = Math.floor(index / cols);
+
+  // Calculate source x and y on the original image
+  const sx = c * tileW;
+  const sy = r * tileH;
+
+  // Draw the specific tile
+  // Destination: (0, 0) with size (tileW, tileH)
+  // Source: (sx, sy) with size (tileW, tileH)
+  image(img, x, y, tileW, tileH, sx, sy, tileW, tileH);
+}
