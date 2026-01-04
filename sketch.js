@@ -1,4 +1,6 @@
-const DEBUG = true;
+const DEBUG = false;
+
+let gameComplete = false;
 
 const sliderCount = 5;
 let sliders = [];
@@ -26,7 +28,7 @@ let curLibraryIndex = 0;
 let curLibrary;
 let libraries;
 const confirmButton = new SimpleButton();
-const fullscreenButton = new SimpleButton();
+const fullscreenButton = new SimpleButton([116, 151, 207]);
 let AI_mascotIMG;
 let chatLine;
 let settingsGUI;
@@ -70,9 +72,8 @@ function mousePressed(e) {
   
   if (chatLine) chatLine.mousePressed();
 
-  if (fullscreenButton.isHovering(mouseX, mouseY)) {
-    const fs = !fullscreen();
-    fullscreen(fs);
+  if (!fullscreen() && fullscreenButton.isHovering(mouseX, mouseY)) {
+    fullscreen(true);
   }
 
   if (confirmButton.isHovering(mouseX, mouseY)) {
@@ -168,9 +169,7 @@ async function setup() {
     
     createP("Introducing v8.0 🥳🥂🍾</br></br>").parent(container);
     createP("We’ve officially retired the <i>old</i> way of working. You know—thinking, tweaking, deciding.").parent(container);
-    createP("Welcome to the future, where effort is optional and outcomes are guaranteed. Simply use natural language to describe the transformations you want, sit back, and let our AI handle everything else. No sliders. No settings. No understanding required.").parent(container);
-    createP("Why wrestle with tools when you can issue wishes?<br/>Why learn a process when you can skip straight to results?").parent(container);
-    createP("With our latest update, you can now simply type in your desired transformations, and our AI will take care of the rest. No more manual adjustments—just pure creativity at your fingertips!").parent(container);
+    createP("Welcome to the future, where effort is optional and outcomes are guaranteed—why learn a process when you can skip straight to results? Simply use natural language to describe the transformations you want, sit back, and let our AI handle the rest. No sliders. No settings. No understanding required—just pure creativity at your fingertips!").parent(container);
     createP("v8.0 doesn’t just streamline your workflow—it removes it entirely.<br/>Creativity, fully automated. Confidence, pre-installed.").parent(container);
 
     let caption = createP("Let us do the work...");
@@ -284,7 +283,7 @@ function draw()
 
   if(!fullscreen())
   {
-    background(0);
+    background(255);
 
 
     fullscreenButton.draw("Resume", width / 2 - 150, height / 2 - 30, 300, 60);
@@ -292,12 +291,6 @@ function draw()
   }
 
   background(60);
-
-  // font size
-  textSize(32);
-  fill(180,50,50);
-
-  text("Do anything with AI!", 650, 90);
 
   // AI mascot
   push();
@@ -310,14 +303,25 @@ function draw()
 
   image(AI_mascotIMG, 150, height - 100 - scaleFactor * .5, 130 - scaleFactor, 150 + scaleFactor);
   pop();
-
-  // reset font size
-  textSize(13);
-  fill(0);
   
   const finishedAllCutouts = currentCutoutIndex >= curLibrary.count();
 
-  if (finishedAllCutouts) {
+  if(gameComplete)
+  {
+    push();
+    textAlign(CENTER, CENTER);
+    textSize(48);
+    textStyle(BOLD);
+    fill(255, 215, 0);
+    text("All tasks complete, congratulations!", width / 2, height / 2 - 50);
+    textSize(24);
+    fill(255);
+    text("You took matters into your own hands and went the less-traveled route.\nThe sooner you realize AI's shortcomings, the sooner you can start honing your own skills.", width / 2, height / 2 + 50);
+    pop();
+    return;
+  }
+
+  else if (finishedAllCutouts) {
     curLibrary.drawAll();
 
     push();
@@ -328,7 +332,10 @@ function draw()
     if (button.isHovering(mouseX, mouseY) && mouseIsPressed) {
       curLibraryIndex++;
       if (curLibraryIndex >= libraries.count())
-        curLibraryIndex = 0;
+      {
+        gameComplete = true;
+        return;
+      }
       curLibrary = libraries.get(curLibraryIndex);
       currentCutoutIndex = 0;
       resetSliders();
@@ -382,7 +389,7 @@ function draw()
   
   // Draw confirm button
   if(isPerfect)
-    confirmButton.draw("Confirm", pos.x + 50, pos.y - 22, 100, 40, 'white');
+    confirmButton.draw("Confirm", pos.x + 50, pos.y - 22, 100, 40);
 
   push(); // push settings
 
