@@ -26,10 +26,20 @@ class ChatLine {
     this.input.position(x, y);
     const btnX = x + this.w - 70;
     const btnY = y;
-    const btnW = 70;
+    const btnW = 90;
     const btnH = this.h + 6; // Match input height roughly
     
     this.sendButton.draw(label, btnX, btnY, btnW, btnH);
+
+    // Help button
+    let helpButton = new SimpleButton([0,0], true);
+    push();
+    textStyle(BOLD);
+    helpButton.draw("?", btnX - this.w + 30, btnY, 36, btnH, 'white');
+    if (helpButton.isHovering(mouseX, mouseY) && mouseIsPressed) {
+        settingsGUI.openHelpModal();
+    }
+    pop();
   }
 
   mousePressed() 

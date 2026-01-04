@@ -1,6 +1,8 @@
 class SimpleButton {
-  constructor() {
+  constructor(backgroundColor = [255, 160], circular = false) {
     this.bounds = null;
+    this.circular = circular;
+    this.backgroundColor = backgroundColor;
   }
 
   // Call this inside draw()
@@ -10,12 +12,19 @@ class SimpleButton {
     push();
     translate(x, y);
 
-	if(this.isHovering(mouseX, mouseY))
-	  fill(250);
+    const isHovering = this.isHovering(mouseX, mouseY);
+
+    if (isHovering)
+      fill(this.backgroundColor.map(c => c + 100));
     else
-      fill(200);
+      fill(...this.backgroundColor);
+
+    cursor(isHovering ? HAND : ARROW)
     
-    rect(0, 0, w, h, 5);
+    if(this.circular)
+      ellipse(w/2, h/2, w, h);
+    else
+      rect(0, 0, w, h, 8);
     
     fill(0);
     textAlign(CENTER, CENTER);

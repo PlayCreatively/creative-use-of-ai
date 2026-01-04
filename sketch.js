@@ -281,7 +281,7 @@ function updateMatrix() {
 let trainingLoss;
 function draw() 
 {
-  background(120);
+  background(60);
 
   // font size
   textSize(32);
@@ -310,8 +310,11 @@ function draw()
   if (finishedAllCutouts) {
     curLibrary.drawAll();
 
+    push();
+    textStyle(BOLD);
+    
     let button = new SimpleButton();
-    button.draw("Upload", width / 2 - 50, height - 150, 100, 40, 'white');
+    button.draw("Upload", width / 2 - 50, height - 150, 100, 40);
     if (button.isHovering(mouseX, mouseY) && mouseIsPressed) {
       curLibraryIndex++;
       if (curLibraryIndex >= libraries.count())
@@ -321,6 +324,7 @@ function draw()
       resetSliders();
     }
 
+    pop();
     return;
   }
   
@@ -380,7 +384,7 @@ function draw()
 
   pop(); // pop settings
 
-  if (chatLine) chatLine.draw(50, height - 50, isTraining ? "Stop" : "Send");
+  if (chatLine) chatLine.draw(50, height - 50, isTraining ? "Stop" : "Command");
 
   sliders.forEach(slider => {
     slider.updateEnableStates(settingsGUI.legacySettings.map(s => s.value));
