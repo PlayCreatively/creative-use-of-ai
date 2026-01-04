@@ -281,6 +281,16 @@ function updateMatrix() {
 let trainingLoss;
 function draw() 
 {
+
+  if(!fullscreen())
+  {
+    background(0);
+
+
+    fullscreenButton.draw("Resume", width / 2 - 150, height / 2 - 30, 300, 60);
+    return;
+  }
+
   background(60);
 
   // font size
@@ -393,9 +403,6 @@ function draw()
   
   if(selectedSlider)
     selectedSlider.drawGizmos();
-
-  if(!fullscreen())
-    fullscreenButton.draw("Fullscreen", width - 120, height - 50, 100, 30);
 
 }
 
