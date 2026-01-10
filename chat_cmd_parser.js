@@ -1,6 +1,12 @@
+let lastCommand = "";
+
 function parseCommand(command, M) {
 
-  command = command.toLowerCase();
+  command = command.toLowerCase().trim();
+
+  if (lastCommand)
+    if (stringContainsAny(command, ["again", "repeat"]) || command === "more")
+      command = lastCommand;
 
   // ----- Determine multiplier ----- //
 
@@ -128,6 +134,8 @@ function parseCommand(command, M) {
 //         "Translation: (" + translationX.toFixed(2) + ", " + translationY.toFixed(2) + ")\n" +
 //         "Rotation: " + rotation.toFixed(2) + " turns\n" +
 //         "Scale: " + scale.toFixed(2));
+
+  lastCommand = command;
 
   return aiTargetMatrix;
 }
