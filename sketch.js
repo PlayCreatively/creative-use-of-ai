@@ -59,15 +59,32 @@ function mousePressed(e) {
   if (e && e.target && e.target.tagName !== 'CANVAS') return;
 
   const lastSelectedSlider = selectedSlider;
-  selectedSlider = null;
 
   let changed = false;
-  sliders.forEach(slider => { 
-    if (slider.handleMousePressed(slider === lastSelectedSlider)) {
-      selectedSlider = slider;
+  let handled = false;
+
+  // 1. Priority: Check Gizmos of the currently selected slider (drawn on top)
+  if (lastSelectedSlider && lastSelectedSlider.isMouseOverAnyGizmo()) {
+    if (lastSelectedSlider.handleMousePressed(true)) {
+      selectedSlider = lastSelectedSlider;
       changed = true;
+      handled = true;
     }
-  });
+  }
+
+  // 2. Check all sliders in Z-Order (Top to Bottom)
+  if (!handled) {
+    selectedSlider = null; // Reset selection
+    for (let i = sliders.length - 1; i >= 0; i--) {
+      let slider = sliders[i];
+      if (slider.handleMousePressed(slider === lastSelectedSlider)) {
+        selectedSlider = slider;
+        changed = true;
+        break; // Stop after finding the top-most slider
+      }
+    }
+  }
+
   if (changed) FancySlider.saveAll(sliders);
   
   if (chatLine) chatLine.mousePressed();
