@@ -29,11 +29,13 @@ let curLibrary;
 let libraries;
 const confirmButton = new SimpleButton();
 const fullscreenButton = new SimpleButton([116, 151, 207]);
+const uploadButton = new SimpleButton(); 
 let AI_mascotIMG;
 let chatLine;
 let settingsGUI;
 let isTraining = false;
 let amplitude;
+let sceneAnimator = new SceneAnimator();
 
 function preload() {
   libraries = new CutoutLibraries("cutouts.json");
@@ -100,6 +102,23 @@ function mousePressed(e) {
 
     currentCutoutIndex++;
     resetSliders();
+  }
+
+  const finishedAllCutouts = currentCutoutIndex >= curLibrary.count();
+  if(finishedAllCutouts && uploadButton.isHovering(mouseX, mouseY) && sceneAnimator.mode === 'idle')
+  {
+      sceneAnimator.submit(() => {
+          curLibraryIndex++;
+          if (curLibraryIndex >= libraries.count())
+          {
+              gameComplete = true;
+              return;
+          }
+          curLibrary = libraries.get(curLibraryIndex);
+          currentCutoutIndex = 0;
+          resetSliders();
+          sceneAnimator.intro();
+      });
   }
 }
 
@@ -346,24 +365,16 @@ function draw()
     return;
   }
 
-  else if (finishedAllCutouts) {
-    curLibrary.drawAll();
-
+  else if (finishedAllCutouts) 
+  {
     push();
-    textStyle(BOLD);
+    const isAnim = sceneAnimator.handleFlyOut(curLibrary, height)
+    curLibrary.drawAll();
     
-    let button = new SimpleButton();
-    button.draw("Upload", width / 2 - 50, height - 150, 100, 40);
-    if (button.isHovering(mouseX, mouseY) && mouseIsPressed) {
-      curLibraryIndex++;
-      if (curLibraryIndex >= libraries.count())
-      {
-        gameComplete = true;
-        return;
-      }
-      curLibrary = libraries.get(curLibraryIndex);
-      currentCutoutIndex = 0;
-      resetSliders();
+    if(!isAnim)
+    {
+      textStyle(BOLD);
+      uploadButton.draw("Submit", width / 2 - 50, height - 150, 100, 40);
     }
 
     pop();
@@ -378,9 +389,11 @@ function draw()
   } 
   else if (M) aiTargetMatrix = M.clone();
   
+  push(); // push pan offset transformation
+  sceneAnimator.applyPanIn(width);
+
   let diffSum = curLibrary.drawAllBeforeAndTarget(currentCutoutIndex, M);
-  
-  
+
   // Calculate button position
   const cutout = curLibrary.get(currentCutoutIndex);
   const s = cutout.scaleFactor;
@@ -425,6 +438,8 @@ function draw()
   text(perc.toFixed(0)+"%", pos.x + 40, pos.y);
 
   pop(); // pop settings
+
+  pop(); // pop pan offset transformation
 
   if (chatLine) chatLine.draw(50, height - 50, isTraining ? "Stop" : "Command");
 
