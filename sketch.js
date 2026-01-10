@@ -154,6 +154,15 @@ function resetSliders() {
   FancySlider.saveAll(sliders);
 }
 
+function resetSliderSetup() {
+  sliders.forEach((slider, i) => {
+    slider.x = 150;
+    slider.y = 100 + i * 30;
+    slider.angle = i % 2 == 0 ? 0 : PI;
+  });
+  FancySlider.saveAll(sliders);
+}
+
 async function setup() {
   createCanvas(width, height);
 
@@ -205,26 +214,7 @@ async function setup() {
   });
 
   if(!DEBUG)
-  settingsGUI.openModal('New Update!', (container) => {
-    
-    createP("Introducing v8.0 🥳🥂🍾</br></br>").parent(container);
-    createP("We’ve officially retired the <i>old</i> way of working. You know—thinking, tweaking, deciding.").parent(container);
-    createP("Welcome to the future, where effort is optional and outcomes are guaranteed—why learn a process when you can skip straight to results? Simply use natural language to describe the transformations you want, sit back, and let our AI handle the rest. No sliders. No settings. No understanding required—just pure creativity at your fingertips!").parent(container);
-    createP("v8.0 doesn’t just streamline your workflow—it removes it entirely.<br/>Creativity, fully automated. Confidence, pre-installed.").parent(container);
-
-    let caption = createP("Let us do the work...");
-    caption.parent(container);
-    caption.style('font-weight', 'bold');
-    caption.style('font-size', '1.5em');
-
-    // Image
-    let img = createImg('images/we can do it [Gemini Generated].jpeg', 'We can do it');
-    img.parent(container);
-    img.style('display', 'block');
-    img.style('width', '40%');
-    img.style('margin', '10px auto');
-    img.style('border-radius', '5px');
-  })
+  settingsGUI.openUpdateModal();
 }
 
 

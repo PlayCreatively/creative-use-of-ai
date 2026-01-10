@@ -2,9 +2,11 @@ class SettingsGUI {
   constructor() {
     // Initialize settings state here to make them accessible
     this.generalSettings = [
+        { label: 'Auto-Update', value: true },
         { label: 'Show Notifications', value: true },
-        { label: 'Share Data', value: true },
-        { label: 'Auto-Save', value: false }
+        { label: 'Hardware Acceleration', value: true },
+        { label: 'Send Crash Reports', value: true },
+        { label: 'Cloud Sync', value: true },
     ];
 
     this.privacySettings = [
@@ -85,6 +87,25 @@ class SettingsGUI {
     this.modalOverlay.removeClass('open');
   }
 
+  openUpdateModal()
+  {
+    this.openModal('New Update!', (container) => {
+      createP("Introducing v8.0 🥳🥂🍾</br></br>").parent(container);
+      createP("We’ve officially retired the <i>old</i> way of working. You know—thinking, tweaking, deciding.").parent(container);
+      createP("Welcome to the future, where effort is optional and outcomes are guaranteed—why learn a process when you can skip straight to results? Simply use natural language to describe the transformations you want, sit back, and let our AI handle the rest. No sliders. No settings. No understanding required—just pure creativity at your fingertips!").parent(container);
+      createP("v8.0 doesn’t just streamline your workflow—it removes it entirely.<br/>Creativity, fully automated. Confidence, pre-installed.").parent(container);
+
+      let caption = createP("Let us do the work...");
+      caption.parent(container);
+      caption.style('font-weight', 'bold');
+      caption.style('font-size', '1.5em');
+
+      // Image
+      let img = createImg('images/we can do it [Gemini Generated].jpeg', 'We can do it');
+      img.parent(container);
+    })
+  }
+
   openHelpModal()
   {
     this.openModal('Command Cheat Sheet', (container) => {
@@ -141,10 +162,8 @@ class SettingsGUI {
     ]);
 
     // Edit Menu
-    this.createDropdown('Edit - IMPLEMENT', [
-      { label: 'Undo', action: () => console.log('Undo') },
-      { label: 'Redo', action: () => console.log('Redo') },
-      { label: 'Clear Canvas', action: () => console.log('Clear Canvas') }
+    this.createDropdown('Edit', [
+      { label: 'Reset Setup', action: () => resetSliderSetup() }
     ]);
     
     // Settings Menu
@@ -246,7 +265,7 @@ class SettingsGUI {
       { label: 'How To', action: () => {
         this.openHelpModal();
       }},
-      { label: 'About', action: () => alert('Creative AI Project v1.0') }
+      { label: 'Latest Update', action: () => this.openUpdateModal() }
     ]);
   }
 
