@@ -7,6 +7,8 @@ function preloadVoiceLines() {
   .map(line => loadSound(`voice lines/${line}.wav`));
   voiceLines.confused = ["I don't know what that means", "what thoughtful instruction"]
   .map(line => loadSound(`voice lines/${line}.wav`));
+  voiceLines.stop = ["stop"]
+  .map(line => loadSound(`voice lines/${line}.wav`));
 }
 
 function playVoiceLine(category) {

@@ -3,7 +3,17 @@ class SettingsGUI {
     // Initialize settings state here to make them accessible
     this.generalSettings = [
         { label: 'Show Notifications', value: true },
+        { label: 'Share Data', value: true },
         { label: 'Auto-Save', value: false }
+    ];
+
+    this.privacySettings = [
+        { label: 'Personalized Ads', value: true },
+        { label: 'Data Sharing with Third Parties', value: true },
+        { label: 'Usage Analytics', value: true },
+        { label: 'Location Access', value: true },
+        { label: 'Camera Access', value: true },
+        { label: 'Microphone Access', value: true }
     ];
 
     this.legacySettings = [
@@ -12,6 +22,8 @@ class SettingsGUI {
         { label: 'Legacy Rotation Handle', value: false },
         { label: 'Legacy Trackpad Gizmo', value: false }
     ];
+
+    this.isPrivacyEditable = true;
 
     this.createOverlay();
     this.createModal();
@@ -119,10 +131,13 @@ class SettingsGUI {
     // --- Example Menu Items ---
     
     // File Menu
-    this.createDropdown('File - IMPLEMENT', [
-      { label: 'New Project', action: () => console.log('New Project') },
-      { label: 'Save', action: () => console.log('Save') },
-      { label: 'Load', action: () => console.log('Load') }
+    this.createDropdown('File', [
+      { label: 'New Project', action: () => {
+        currentCutoutIndex = 0;
+        curLibraryIndex = 0;
+        curLibrary = libraries.get(0);
+        resetSliders();
+      } }
     ]);
 
     // Edit Menu
@@ -143,36 +158,73 @@ class SettingsGUI {
             settingsHeader.addClass('settings-header');
 
             // Helper function to create toggles
-            const toggleSetting = (settings) => {
-              settings.forEach(setting => {
-                  let row = createDiv('');
-                  row.parent(container);
-                  row.addClass('settings-row');
+            const toggleSetting = (settings, type) => {
+              const length = settings.length;
+              let checkboxes = [];
 
-                  // Checkbox
-                  let chk = createCheckbox('', setting.value);
-                  chk.parent(row);
-                  chk.addClass('settings-checkbox');
-                  
-                  // Update the setting object when changed
-                  chk.changed(() => {
-                    setting.value = chk.checked();
-                    const isAnyLegacy = setting.label === 'Legacy UI' || 
-                                        setting.label === 'Legacy Move Handle' ||
-                                        setting.label === 'Legacy Rotation Handle' ||
-                                        setting.label === 'Legacy Trackpad Gizmo';
+              settings.forEach((setting, i) => {
+                let row = createDiv('');
+                row.parent(container);
+                row.addClass('settings-row');
 
-                    if(setting.value && isAnyLegacy)
-                      playVoiceLine('warning');
+                // Checkbox
+                let chk = createCheckbox('', setting.value);
+                chk.parent(row);
+                chk.addClass('settings-checkbox');
+                checkboxes.push(chk);
+                
+                // Update the setting object when changed
+                chk.changed(() => {
+                  if(type !== 'privacy' || this.isPrivacyEditable)
+                    settings[i].value = chk.checked();
+
+                  if(type === 'privacy')
+                  {
+                    if(!this.isPrivacyEditable)
+                    {
+                      checkboxes[i].checked(true);
+                      return;
+                    }
+
+                    const leftI = (i-1 + length) % length;
+                    const rightI = (i+1) % length;
+                    settings[leftI].value = !settings[leftI].value;
+                    settings[rightI].value = !settings[rightI].value;
+
+                    // Update UI for neighbors
+                    checkboxes[leftI].checked(settings[leftI].value);
+                    checkboxes[rightI].checked(settings[rightI].value);
+
+                    const allOff = settings.every(s => !s.value);
+                    if(allOff)
+                    {
+                      // Revert the change
+                      checkboxes.forEach((chk, idx) => {
+                        chk.checked(true);
+                        settings[idx].value = true;
+                      });
+                      this.isPrivacyEditable = false;
+                      playVoiceLine('stop');
+                    }
+                  }
+
+                  if(setting.value && type === 'legacy')
+                    playVoiceLine('warning');
                   });
-                  
-                  // Label
-                  let lbl = createSpan(setting.label);
-                  lbl.parent(row);
+                
+                // Label
+                let lbl = createSpan(setting.label);
+                lbl.parent(row);
               });
             }
 
-            toggleSetting(this.generalSettings);
+            toggleSetting(this.generalSettings, 'general');
+
+            // --- Privacy Settings ---
+            let privacyHeader = createElement('h3', 'Privacy Settings');
+            privacyHeader.parent(container);
+            privacyHeader.addClass('settings-header');
+            toggleSetting(this.privacySettings, 'privacy');
 
             // --- Legacy Section ---
             let legacyHeader = createElement('h3', 'Legacy Features');
@@ -184,7 +236,7 @@ class SettingsGUI {
             warning.parent(container);
             warning.addClass('warning-box');
             
-            toggleSetting(this.legacySettings);
+            toggleSetting(this.legacySettings, 'legacy');
         }) 
       }
     ]);
