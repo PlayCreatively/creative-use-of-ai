@@ -114,7 +114,7 @@ class Cutout {
     this.targetMatrix = math.matrix(data.targetMatrix);
 
     // Load the image
-    this.img = loadImage("../images/" + this.imageName, (loadedImg) => {
+    this.img = loadImage("images/" + this.imageName, (loadedImg) => {
       this.silhouetteImg = loadedImg.get();
       this.silhouetteImg.loadPixels();
       for (let i = 0; i < this.silhouetteImg.pixels.length; i += 4) {
