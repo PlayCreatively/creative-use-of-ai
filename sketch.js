@@ -130,8 +130,16 @@ async function setup() {
   // Initialize audio analyzer with smoothing (0.0 - 0.99)
   amplitude = new p5.Amplitude(0.8);
 
+  const sliderColors = [
+    color(255, 80, 80),
+    color(80, 200, 80),
+    color(80, 80, 255),
+    color(255, 180, 40),
+    color(200, 80, 200)
+  ];
+
   for (let i = 0; i < sliderCount; i++) 
-    sliders[i] = new FancySlider(150, 100 + i * 30, 200, i % 2 == 0 ? 0 : PI);
+    sliders[i] = new FancySlider(150, 100 + i * 30, 200, i % 2 == 0 ? 0 : PI, sliderColors[i % sliderColors.length]);
 
   FancySlider.loadAll(sliders);
 

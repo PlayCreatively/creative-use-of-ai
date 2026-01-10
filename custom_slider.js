@@ -3,11 +3,12 @@ const TRACKPAD_GIZMO = 1;
 const ROTATE_GIZMO = 0;
 
 class FancySlider {
-  constructor(x, y, length, angle = 0) {
+  constructor(x, y, length, angle = 0, color = null) {
     this.x = x;
     this.y = y;
     this.length = length;
     this.thickness = 6;
+    this.color = color || ((typeof window.color === 'function') ? window.color(200) : { levels: [200,200,200,255] }); // Fallback safe check
 
     this.angle = angle;       
     this.v = 0.0;             // -1..1
@@ -25,7 +26,7 @@ class FancySlider {
     this.dragOffsetY = 0;
     this.dragAngleOffset = 0;    // offset to prevent snapping
 
-    this.gizmoSize = 18;
+    this.gizmoSize = 22;
     this.gizmoMargin = 32;    
   }
 
@@ -184,20 +185,31 @@ class FancySlider {
     translate(this.x, this.y);
     rotate(this.angle);
 
+    let tx = map(this.v, -1, 1, -this.length / 2, this.length / 2);
+
     if (!this.trackpadActive) {
       rectMode(CENTER);
       fill(180, 100);
       noStroke();
       rect(0, this.length / 2, this.length, this.length, 4);
+
+      // Trackpad line
+      stroke(this.color);
+      strokeWeight(2);
+      line(tx, 0, tx, this.length);
     }
 
     // track
     strokeWeight(this.thickness);
-    stroke(this.trackpadActive ? 220 : 120);
+    if (this.trackpadActive) {
+      stroke(this.color);
+    } else {
+      let c = this.color;
+      stroke(red(c), green(c), blue(c), 120);
+    }
     line(-this.length / 2, 0, this.length / 2, 0);
 
     // thumb
-    let tx = map(this.v, -1, 1, -this.length / 2, this.length / 2);
     rectMode(CENTER);
     stroke(0, 80);
     strokeWeight(1);
@@ -218,7 +230,7 @@ class FancySlider {
     push();
 
     textAlign(CENTER, CENTER);
-    textSize(10);
+    textSize(16);
 
     // Rotate gizmo (changed icon to circle arrow to indicate free rotation)
     if(this.rotationEnabled)
