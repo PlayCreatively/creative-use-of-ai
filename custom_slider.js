@@ -110,8 +110,14 @@ class FancySlider {
     
     if (!this.hover || !this.enabled) return false;
     
+    // TRACK DRAG
+    if (this.isMouseOverTrack()) {
+      this.draggingThumb = true;
+      this.updateValueFromMouse();
+    }
+    
     // ROTATE GIZMO
-    if (this.rotationEnabled && this.isMouseOverGizmo(0)) {
+    else if (this.rotationEnabled && this.isMouseOverGizmo(0)) {
       this.draggingRotate = true;
       
       // Calculate the angle from the center of the slider to the mouse
@@ -135,12 +141,6 @@ class FancySlider {
       this.draggingMove = true;
       this.dragOffsetX = mouseX - this.x;
       this.dragOffsetY = mouseY - this.y;
-    }
-    
-    // TRACK DRAG
-    else if (this.isMouseOverTrack()) {
-      this.draggingThumb = true;
-      this.updateValueFromMouse();
     }
 
     return true;
