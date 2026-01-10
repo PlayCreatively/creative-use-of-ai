@@ -495,7 +495,8 @@ function calculateModelMatrixTF(sliderValues) {
 
     // --- 1. Scale (1+v, 1+v) ---
     let M = makeMat(zeros, ones, ones, zeros, zeros);
-    const M1 = makeMat(zeros, s0.add(1), s0.add(1), zeros, zeros);
+    const scale = s0.add(1).maximum(0.1); // prevent zero scale
+    const M1 = makeMat(zeros, scale, scale, zeros, zeros);
     M = M1.matMul(M);
 
     // --- 5. Special Rotation (HalfAngle1 + HalfAngle2) ---
