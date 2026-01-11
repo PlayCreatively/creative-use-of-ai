@@ -103,6 +103,10 @@ class SettingsGUI {
       // Image
       let img = createImg('images/we can do it [Gemini Generated].jpeg', 'We can do it');
       img.parent(container);
+      img.style('display', 'block');
+      img.style('width', '40%');
+      img.style('margin', '10px auto');
+      img.style('border-radius', '5px');
     })
   }
 

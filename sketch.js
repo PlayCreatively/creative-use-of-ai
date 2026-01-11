@@ -448,10 +448,6 @@ function trainingStep(inputMatrix) // sample input matrix
 
   // regressor.learningRate *= 0.999; // decay learning rate over time
 
-  text("Target Matrix:\n" + matrixToString(inputMatrix), 500, 50);
-
-  text("loss: " + nf(lastLoss, 1, 4), 500, 250);
-
   // Get prediction for visualization
   lastPred = regressor.predict(inputMatrix);
 
