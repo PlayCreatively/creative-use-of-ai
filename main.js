@@ -1,6 +1,7 @@
 const DEBUG = false;
 
 let gameComplete = false;
+let updateModalOpened = false;
 
 const sliderCount = 5;
 let sliders = [];
@@ -43,6 +44,7 @@ function preload() {
   AI_mascotIMG = loadImage('images/ai mascot [Gemini Generated].png');
 
   preloadVoiceLines();
+  preloadSFX();
 }
 
 function windowResized() 
@@ -54,6 +56,13 @@ function windowResized()
   width = fs ? windowWidth : windowed.width;
   height = fs ? windowHeight : windowed.height;
   resizeCanvas(width, height);
+
+  if(!DEBUG)
+    if(fs && !updateModalOpened)
+    {
+      settingsGUI.openUpdateModal();
+      updateModalOpened = true;
+    }
 }
 
 function mousePressed(e) {
@@ -98,6 +107,7 @@ function mousePressed(e) {
 
     currentCutoutIndex++;
     resetSliders();
+    sfx.confirm.play();
   }
 
   const finishedAllCutouts = currentCutoutIndex >= curLibrary.count();
@@ -212,9 +222,6 @@ async function setup() {
       return loss; 
     }
   });
-
-  if(!DEBUG)
-  settingsGUI.openUpdateModal();
 }
 
 

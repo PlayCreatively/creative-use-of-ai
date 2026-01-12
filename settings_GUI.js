@@ -81,6 +81,11 @@ class SettingsGUI {
     }
     
     this.modalOverlay.addClass('open');
+
+    if(title === 'New Update!')
+      sfx.update.play();
+    else
+      sfx.openModal.play();
   }
 
   closeModal() {
@@ -228,6 +233,7 @@ class SettingsGUI {
                       });
                       this.isPrivacyEditable = false;
                       playVoiceLine('stop');
+                      sfx.privacyCorrection.play();
                     }
                   }
 
