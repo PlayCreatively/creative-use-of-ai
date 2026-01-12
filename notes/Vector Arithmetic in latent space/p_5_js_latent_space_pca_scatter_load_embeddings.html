@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Latent Space PCA Scatter</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+    <style>
+      body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+      #hud { position: fixed; top: 8px; left: 8px; background: rgba(255,255,255,0.9); padding: 8px 10px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+      #hud h1 { font-size: 14px; margin: 0 0 6px; }
+      #hud p { margin: 4px 0; font-size: 12px; }
+      #legend { display: flex; gap: 8px; flex-wrap: wrap; }
+      .chip { padding: 2px 6px; border-radius: 999px; background: #efefef; font-size: 11px; }
+      .tooltip { position: fixed; pointer-events: none; background: rgba(20,20,25,0.95); color: white; padding: 6px 8px; border-radius: 8px; font-size: 12px; transform: translate(10px, 10px); white-space: nowrap; }
+    </style>
+  </head>
+  <body>
+    <div id="hud">
+      <h1>Latent Space PCA</h1>
+      <p>• Load your <code>embeddings.json</code> next to this file.<br/>• Scroll: zoom · Drag: pan · Hover: label</p>
+      <div id="legend"></div>
+    </div>
+    <div id="tooltip" class="tooltip" style="display:none"></div>
+    <script>
+      // EXPECTED JSON FORMAT (array of points):
+      // [{ "id": "king", "label": "king", "group": "words", "x": 0.12, "y": -0.34 }, ...]
+      let points = [];
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      let scale = 1, offsetX = 0, offsetY = 0;
+      let isDragging = false, lastMouseX = 0, lastMouseY = 0;
+      const tooltip = document.getElementById('tooltip');
+
+      function projectToScreen(vx, vy) {
+        const sx = (vx - minX) / (maxX - minX);
+        const sy = (vy - minY) / (maxY - minY);
+        // map to [-1,1] then apply scale/offset
+        const nx = (sx * 2 - 1) * (Math.min(windowWidth, windowHeight) * 0.45) * scale + windowWidth/2 + offsetX;
+        const ny = (1 - sy * 2) * (Math.min(windowWidth, windowHeight) * 0.45) * scale + windowHeight/2 + offsetY;
+        return [nx, ny];
+      }
+
+      function setup() {
+        createCanvas(window.innerWidth, window.innerHeight);
+        noStroke();
+        textFont('system-ui');
+        loadJSON('embeddings.json', (data) => {
+          points = data;
+          points.forEach(p => {
+            if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+            if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+          });
+          buildLegend();
+          loop();
+        }, (err) => {
+          console.error('Failed to load embeddings.json', err);
+        });
+        noLoop();
+      }
+
+      function mouseWheel(e){
+        const factor = e.deltaY < 0 ? 1.1 : 0.9;
+        scale *= factor;
+      }
+
+      function mousePressed(){
+        isDragging = true; lastMouseX = mouseX; lastMouseY = mouseY;
+      }
+      function mouseReleased(){ isDragging = false; }
+      function mouseDragged(){ if(isDragging){ offsetX += mouseX - lastMouseX; offsetY += mouseY - lastMouseY; lastMouseX = mouseX; lastMouseY = mouseY; }}
+
+      function buildLegend(){
+        const legend = document.getElementById('legend');
+        const groups = [...new Set(points.map(p=>p.group || 'default'))];
+        legend.innerHTML = groups.map(g=>`<span class="chip">${g}</span>`).join('');
+      }
+
+      function drawAxes(){
+        stroke(200); strokeWeight(1);
+        // simple crosshair at center
+        line(0, height/2 + offsetY, width, height/2 + offsetY);
+        line(width/2 + offsetX, 0, width/2 + offsetX, height);
+        noStroke();
+      }
+
+      function draw(){
+        background(250);
+        drawAxes();
+        let hovered = null;
+        for(const p of points){
+          const [sx, sy] = projectToScreen(p.x, p.y);
+          const r = 5;
+          // draw point
+          fill(30, 30, 35, 230);
+          circle(sx, sy, r*2);
+          // hover test
+          if (dist(mouseX, mouseY, sx, sy) < 8) { hovered = {p, sx, sy}; }
+        }
+        if (hovered){
+          const {p} = hovered;
+          tooltip.style.display = 'block';
+          tooltip.style.left = mouseX + 'px';
+          tooltip.style.top = mouseY + 'px';
+          tooltip.innerText = `${p.label || p.id}`;
+        } else {
+          tooltip.style.display = 'none';
+        }
+      }
+
+      function windowResized(){ resizeCanvas(window.innerWidth, window.innerHeight); }
+    </script>
+  </body>
+</html>
